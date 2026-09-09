@@ -1,0 +1,26 @@
+# ~/.gitconfig — gestionado desde ~/dotfiles (Stow)
+#
+# [user] NO vive aquí a propósito: install.sh lo pregunta cada vez que se
+# corre en una PC nueva y lo escribe en ~/.gitconfig.local (fuera del repo,
+# nunca se commitea con tu nombre/email real).
+
+[include]
+    path = ~/.gitconfig.local
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = nano
+
+[pull]
+    rebase = false
+
+[color]
+    ui = auto
+
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    lg = log --oneline --graph --decorate --all

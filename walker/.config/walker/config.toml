@@ -1,0 +1,10 @@
+# ~/.config/walker/config.toml — gestionado desde ~/dotfiles (Stow)
+#
+# Config mínima de arranque: walker trae buenos defaults, así que se deja
+# solo lo esencial en vez de adivinar claves de un esquema que cambia seguido
+# entre versiones. Referencia completa: https://github.com/abenz1267/walker
+# Ajusta/expande esto una vez que walker esté corriendo (walker --help,
+# y su wiki, tienen el resto de opciones de theming/módulos).
+
+close_when_open = true
+terminal = "kitty"

@@ -1,0 +1,47 @@
+/* ~/.config/wlogout/style.css — Tokyo Night, gestionado desde ~/dotfiles (Stow) */
+
+* {
+    background-image: none;
+    font-family: "CaskaydiaCove Nerd Font";
+}
+
+window {
+    background: rgba(26, 27, 38, 0.55);
+}
+
+button {
+    color: #c0caf5;
+    background-color: rgba(41, 46, 66, 0.75);
+    border: 2px solid #292e42;
+    border-radius: 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 25%;
+    margin: 12px;
+    transition: all 0.2s ease-in-out;
+}
+
+button:focus, button:active, button:hover {
+    background-color: rgba(122, 162, 247, 0.25);
+    border-color: #7aa2f7;
+}
+
+#lock {
+    background-image: image(url("/usr/share/wlogout/icons/lock.png"));
+}
+
+#logout {
+    background-image: image(url("/usr/share/wlogout/icons/logout.png"));
+}
+
+#suspend {
+    background-image: image(url("/usr/share/wlogout/icons/suspend.png"));
+}
+
+#reboot {
+    background-image: image(url("/usr/share/wlogout/icons/reboot.png"));
+}
+
+#shutdown {
+    background-image: image(url("/usr/share/wlogout/icons/shutdown.png"));
+}

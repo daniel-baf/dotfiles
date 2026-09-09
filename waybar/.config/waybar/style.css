@@ -1,0 +1,64 @@
+/* ~/.config/waybar/style.css — Tokyo Night, gestionado desde ~/dotfiles (Stow) */
+
+* {
+    font-family: "CaskaydiaCove Nerd Font";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: rgba(26, 27, 38, 0.85);
+    color: #c0caf5;
+    border-bottom: 2px solid #292e42;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    color: #545c7e;
+    background: transparent;
+}
+
+#workspaces button.active {
+    color: #7aa2f7;
+    background: rgba(122, 162, 247, 0.15);
+    border-radius: 8px;
+}
+
+#workspaces button:hover {
+    background: rgba(187, 154, 247, 0.15);
+    border-radius: 8px;
+}
+
+#window {
+    color: #a9b1d6;
+    font-style: italic;
+}
+
+#clock {
+    font-weight: bold;
+    color: #bb9af7;
+}
+
+#cpu, #memory, #custom-nvidia, #network, #pulseaudio, #battery, #custom-notifications, #tray {
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 8px;
+    background: rgba(41, 46, 66, 0.6);
+    color: #c0caf5;
+}
+
+#battery.warning {
+    color: #e0af68;
+}
+
+#battery.critical {
+    color: #f7768e;
+}
+
+#custom-nvidia {
+    color: #9ece6a;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}

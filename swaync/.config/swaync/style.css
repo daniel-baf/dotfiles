@@ -1,0 +1,66 @@
+/* ~/.config/swaync/style.css — Tokyo Night, gestionado desde ~/dotfiles (Stow) */
+
+* {
+    font-family: "CaskaydiaCove Nerd Font";
+    font-size: 13px;
+}
+
+.notification-row {
+    background: transparent;
+}
+
+.notification {
+    background: rgba(26, 27, 38, 0.92);
+    border: 1px solid #292e42;
+    border-radius: 12px;
+    color: #c0caf5;
+    padding: 6px;
+}
+
+.notification-content {
+    padding: 6px;
+}
+
+.close-button {
+    background: rgba(247, 118, 142, 0.2);
+    color: #f7768e;
+    border-radius: 8px;
+}
+
+.close-button:hover {
+    background: rgba(247, 118, 142, 0.4);
+}
+
+.control-center {
+    background: rgba(26, 27, 38, 0.95);
+    border: 1px solid #292e42;
+    border-radius: 14px;
+    color: #c0caf5;
+}
+
+.widget-title {
+    color: #bb9af7;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.widget-title > button {
+    background: rgba(122, 162, 247, 0.15);
+    color: #7aa2f7;
+    border-radius: 8px;
+}
+
+.widget-dnd {
+    padding: 10px;
+}
+
+.widget-dnd > switch:checked {
+    background: #7aa2f7;
+}
+
+.widget-mpris {
+    background: rgba(41, 46, 66, 0.6);
+    border-radius: 12px;
+    margin: 6px;
+    padding: 8px;
+}
