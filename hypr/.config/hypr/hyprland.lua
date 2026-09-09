@@ -66,6 +66,10 @@ hl.on("hyprland.start", function()
     -- servicio de walker: precarga la ventana para que SUPER+R la muestre al instante
     hl.exec_cmd("pkill -f 'walker --gapplication-service'; walker --gapplication-service")
 end)
+hl.on("hyprland.start", function()
+    -- ícono de red en la bandeja (tray de waybar) para conectarse a redes WiFi nuevas
+    hl.exec_cmd("pkill nm-applet; nm-applet --indicator")
+end)
 
 -----------------------
 ---- LOOK AND FEEL ----
@@ -175,6 +179,11 @@ hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e+1" }))
 -- Workspace especial (scratchpad)
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+
+-- Pantallas: SUPER+P abre la GUI (nwg-displays) para acomodar/duplicar/
+-- extender a mano; SUPER+SHIFT+P alterna directo entre extender y duplicar.
+hl.bind(mainMod .. " + P",         hl.dsp.exec_cmd("nwg-displays"))
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/scripts/toggle-display-mode.sh"))
 
 -- Screenshots (hyprshot)
 hl.bind("Print",                hl.dsp.exec_cmd("hyprshot -m output -o ~/Pictures/Screenshots"))

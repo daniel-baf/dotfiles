@@ -1,22 +1,36 @@
 // ~/.config/waybar/config.jsonc — gestionado desde ~/dotfiles (Stow)
+// Estilo "isla flotante": la ventana de waybar es transparente y cada grupo
+// de módulos (izquierda/centro/derecha) es un chip redondeado aparte -- ver
+// style.css (".modules-left/center/right").
 {
     "layer": "top",
     "position": "top",
-    "height": 32,
+    "height": 34,
+    "margin-top": 6,
+    "margin-left": 10,
+    "margin-right": 10,
     "spacing": 4,
 
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-center": ["clock"],
+    "modules-left": ["custom/logo", "hyprland/workspaces", "hyprland/window"],
+    "modules-center": ["custom/media", "clock"],
     "modules-right": [
         "custom/nvidia",
         "cpu",
         "memory",
+        "custom/capslock",
+        "custom/numlock",
         "network",
         "pulseaudio",
         "battery",
         "custom/notifications",
         "tray"
     ],
+
+    "custom/logo": {
+        "format": "",
+        "on-click": "walker",
+        "tooltip": false
+    },
 
     "hyprland/workspaces": {
         "format": "{name}",
@@ -28,8 +42,17 @@
         "separate-outputs": true
     },
 
+    "custom/media": {
+        "exec": "playerctl -a metadata --format '{{status}} {{artist}} - {{title}}' -F 2>/dev/null",
+        "format": "{}",
+        "max-length": 40,
+        "on-click": "playerctl play-pause",
+        "on-scroll-up": "playerctl next",
+        "on-scroll-down": "playerctl previous"
+    },
+
     "clock": {
-        "format": "{:%H:%M  •  %a %d %b}",
+        "format": " {:%H:%M  •  %a %d %b}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     },
 
@@ -47,6 +70,18 @@
         "exec": "~/.config/waybar/scripts/nvidia.sh",
         "return-type": "json",
         "interval": 5
+    },
+
+    "custom/capslock": {
+        "exec": "~/.config/waybar/scripts/capslock.sh",
+        "return-type": "json",
+        "interval": 1
+    },
+
+    "custom/numlock": {
+        "exec": "~/.config/waybar/scripts/numlock.sh",
+        "return-type": "json",
+        "interval": 1
     },
 
     "network": {

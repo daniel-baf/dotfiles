@@ -16,7 +16,7 @@ SKIP_BACKUP=false
 for arg in "$@"; do
     case "$arg" in
         --skip-backup) SKIP_BACKUP=true ;;
-        *) echo "Uso: ./install.sh [--skip-backup]"; exit 1 ;;
+        *) echo "Uso: ./install.sh [--skip-backup]  |  Usage: ./install.sh [--skip-backup]"; exit 1 ;;
     esac
 done
 
@@ -24,7 +24,34 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STOW_PACKAGES="git kitty hypr waybar walker swaync wlogout"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
-echo "==> Dotfiles en: $DOTFILES_DIR"
+# ---------------------------------------------------------------------------
+# Idioma / Language
+# ---------------------------------------------------------------------------
+echo "Idioma / Language:"
+echo "  1) Español (default)"
+echo "  2) English"
+read -rp "[1/2]: " lang_choice
+case "$lang_choice" in
+    2) LOCALE="en" ;;
+    *) LOCALE="es" ;;
+esac
+
+# say "<es>" "<en>"            -> imprime el mensaje con salto de línea
+# ask "<es prompt>" "<en prompt>" -> lo mismo pero sin salto, para read -rp "$(ask ...)"
+say() {
+    if [ "$LOCALE" = "en" ]; then printf '%s\n' "$2"; else printf '%s\n' "$1"; fi
+}
+ask() {
+    if [ "$LOCALE" = "en" ]; then printf '%s' "$2"; else printf '%s' "$1"; fi
+}
+# ask_yn "<es prompt>" "<en prompt>" -> true/false (default No)
+ask_yn() {
+    local ans
+    read -rp "$(ask "$1" "$2")" ans
+    [[ "$ans" =~ ^[sSyY] ]]
+}
+
+say "==> Dotfiles en: $DOTFILES_DIR" "==> Dotfiles at: $DOTFILES_DIR"
 
 # ---------------------------------------------------------------------------
 # 0. Backup de seguridad antes de tocar nada en $HOME (opcional: --skip-backup)
@@ -33,94 +60,113 @@ echo "==> Dotfiles en: $DOTFILES_DIR"
 # paso 3) -> si detectamos btrfs, además del backup de archivos de abajo,
 # sacamos un snapshot de solo lectura de /home completo como red de seguridad.
 if $SKIP_BACKUP; then
-    echo "==> --skip-backup: se omite el snapshot btrfs de \$HOME."
+    say "==> --skip-backup: se omite el snapshot btrfs de \$HOME." \
+        "==> --skip-backup: skipping the btrfs snapshot of \$HOME."
 elif [ "$(stat -f --format=%T "$HOME" 2>/dev/null)" = "btrfs" ] && command -v btrfs >/dev/null 2>&1; then
-    echo "==> \$HOME es btrfs."
+    say "==> \$HOME es btrfs." "==> \$HOME is btrfs."
     if [ -d /.snapshots ]; then
         snap_name="home-preinstall-$(date +%Y%m%d-%H%M%S)"
-        echo "==> Creando snapshot de solo lectura: /.snapshots/$snap_name"
+        say "==> Creando snapshot de solo lectura: /.snapshots/$snap_name" \
+            "==> Creating read-only snapshot: /.snapshots/$snap_name"
         if sudo btrfs subvolume snapshot -r /home "/.snapshots/$snap_name"; then
-            echo "==> Snapshot listo. Para volver atrás si algo sale mal:"
+            say "==> Snapshot listo. Para volver atrás si algo sale mal:" \
+                "==> Snapshot ready. To roll back if something goes wrong:"
             echo "    sudo btrfs subvolume snapshot /.snapshots/$snap_name /home_restaurado"
         else
-            echo "==> No se pudo crear el snapshot btrfs, seguimos solo con el backup de archivos."
+            say "==> No se pudo crear el snapshot btrfs, seguimos solo con el backup de archivos." \
+                "==> Could not create the btrfs snapshot, continuing with just the file backup."
         fi
     else
-        echo "==> No encontré /.snapshots montado, seguimos solo con el backup de archivos."
+        say "==> No encontré /.snapshots montado, seguimos solo con el backup de archivos." \
+            "==> Could not find /.snapshots mounted, continuing with just the file backup."
     fi
 else
-    echo "==> \$HOME no es btrfs (o falta el binario 'btrfs'): solo se hace el backup de archivos."
+    say "==> \$HOME no es btrfs (o falta el binario 'btrfs'): solo se hace el backup de archivos." \
+        "==> \$HOME is not btrfs (or the 'btrfs' binary is missing): only the file backup is done."
 fi
 
 # ---------------------------------------------------------------------------
 # 1. git
 # ---------------------------------------------------------------------------
 if ! command -v git >/dev/null 2>&1; then
-    echo "==> Instalando git..."
+    say "==> Instalando git..." "==> Installing git..."
     sudo pacman -S --needed --noconfirm git
 else
-    echo "==> git ya está instalado ($(git --version))."
+    say "==> git ya está instalado ($(git --version))." "==> git is already installed ($(git --version))."
 fi
 
 # ---------------------------------------------------------------------------
-# 2. paru (necesario para walker y wlogout, que solo están en AUR)
+# 2. paru (necesario para walker, wlogout y varias apps opcionales, solo AUR)
 # ---------------------------------------------------------------------------
 if ! command -v paru >/dev/null 2>&1; then
-    echo "==> Instalando paru..."
+    say "==> Instalando paru..." "==> Installing paru..."
     sudo pacman -S --needed --noconfirm base-devel
     tmpdir=$(mktemp -d)
     git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
     (cd "$tmpdir/paru" && makepkg -si --noconfirm)
     rm -rf "$tmpdir"
 else
-    echo "==> paru ya está instalado."
+    say "==> paru ya está instalado." "==> paru is already installed."
 fi
 
 # ---------------------------------------------------------------------------
 # 3. Paquetes
 # ---------------------------------------------------------------------------
-echo "==> Instalando paquetes de los repos oficiales..."
+say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages from the official repos..."
 sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd \
-    hyprland hyprlock hypridle waybar kitty github-cli postgresql \
-    pipewire pipewire-pulse wireplumber brightnessctl playerctl
+    hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
+    pipewire pipewire-pulse wireplumber brightnessctl playerctl \
+    networkmanager network-manager-applet
 
-echo "==> Instalando paquetes de AUR (walker, wlogout, elephant)..."
+say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays)..." \
+    "==> Installing AUR packages (walker, wlogout, elephant, nwg-displays)..."
 # walker (SUPER+R) necesita el backend "elephant" corriendo aparte para poder
 # buscar algo -- sin él, walker abre y falla en silencio. Se instalan solo los
 # providers que usamos (apps/calc/runner/files), no "elephant-all-bin" (ese
 # arrastra 1Password/Bitwarden/apt/dnf/rpm/niri, nada de lo que usamos aquí).
-paru -S --needed --noconfirm walker wlogout \
+# nwg-displays: GUI para acomodar/duplicar/extender pantallas (SUPER+P).
+paru -S --needed --noconfirm walker wlogout nwg-displays \
     elephant-bin elephant-desktopapplications-bin elephant-calc-bin \
     elephant-runner-bin elephant-files-bin
+
+# ---------------------------------------------------------------------------
+# 3a. NetworkManager (obligatorio: sin esto no hay forma de conectarse a
+#     redes WiFi nuevas desde la UI)
+# ---------------------------------------------------------------------------
+say "==> Habilitando NetworkManager (para conectarte a redes WiFi nuevas)..." \
+    "==> Enabling NetworkManager (needed to connect to new WiFi networks)..."
+sudo systemctl enable --now NetworkManager.service
 
 # ---------------------------------------------------------------------------
 # 3b. Docker
 # ---------------------------------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
-    echo "==> Instalando Docker..."
+    say "==> Instalando Docker..." "==> Installing Docker..."
     sudo pacman -S --needed --noconfirm docker docker-compose
     sudo systemctl enable --now docker.service
 else
-    echo "==> Docker ya está instalado ($(docker --version))."
+    say "==> Docker ya está instalado ($(docker --version))." "==> Docker is already installed ($(docker --version))."
 fi
 
 if ! groups "$USER" | grep -q '\bdocker\b'; then
-    echo "==> Agregando $USER al grupo docker..."
+    say "==> Agregando $USER al grupo docker..." "==> Adding $USER to the docker group..."
     sudo usermod -aG docker "$USER"
-    echo "==> Hecho. Necesitás cerrar sesión y volver a entrar para poder usar 'docker' sin sudo."
+    say "==> Hecho. Necesitás cerrar sesión y volver a entrar para poder usar 'docker' sin sudo." \
+        "==> Done. You need to log out and back in to use 'docker' without sudo."
 else
-    echo "==> $USER ya está en el grupo docker."
+    say "==> $USER ya está en el grupo docker." "==> $USER is already in the docker group."
 fi
 
 # ---------------------------------------------------------------------------
 # 3c. Claude Code
 # ---------------------------------------------------------------------------
 if ! command -v claude >/dev/null 2>&1; then
-    echo "==> Instalando Claude Code..."
+    say "==> Instalando Claude Code..." "==> Installing Claude Code..."
     curl -fsSL https://claude.ai/install.sh | bash
 else
-    echo "==> Claude Code ya está instalado ($(claude --version 2>/dev/null))."
+    say "==> Claude Code ya está instalado ($(claude --version 2>/dev/null))." \
+        "==> Claude Code is already installed ($(claude --version 2>/dev/null))."
 fi
 
 # ---------------------------------------------------------------------------
@@ -132,14 +178,14 @@ fi
 # nuevo después y usá "gh auth switch" para alternar entre ambas.
 if command -v gh >/dev/null 2>&1; then
     if gh auth status >/dev/null 2>&1; then
-        echo "==> gh ya tiene una sesión activa ($(gh auth status 2>&1 | grep 'Logged in' | head -1))."
+        say "==> gh ya tiene una sesión activa ($(gh auth status 2>&1 | grep 'Logged in' | head -1))." \
+            "==> gh already has an active session ($(gh auth status 2>&1 | grep 'Logged in' | head -1))."
     else
         echo ""
-        read -rp "¿Hacer login con 'gh auth login' ahora? [s/N]: " setup_gh
-        if [[ "$setup_gh" =~ ^[sSyY] ]]; then
+        if ask_yn "¿Hacer login con 'gh auth login' ahora? [s/N]: " "Log in with 'gh auth login' now? [y/N]: "; then
             gh auth login
         else
-            echo "==> Saltado. Corré 'gh auth login' cuando quieras."
+            say "==> Saltado. Corré 'gh auth login' cuando quieras." "==> Skipped. Run 'gh auth login' whenever you want."
         fi
     fi
 fi
@@ -152,11 +198,12 @@ fi
 # https://cloud.google.com/sdk/docs/install-sdk
 GCLOUD_DIR="$HOME/google-cloud-sdk"
 if command -v gcloud >/dev/null 2>&1; then
-    echo "==> gcloud ya está instalado ($(gcloud --version | head -1))."
+    say "==> gcloud ya está instalado ($(gcloud --version | head -1))." "==> gcloud is already installed ($(gcloud --version | head -1))."
 elif [ -d "$GCLOUD_DIR" ]; then
-    echo "==> Ya existe $GCLOUD_DIR pero gcloud no está en el PATH -- abrí una terminal nueva."
+    say "==> Ya existe $GCLOUD_DIR pero gcloud no está en el PATH -- abrí una terminal nueva." \
+        "==> $GCLOUD_DIR already exists but gcloud isn't on the PATH -- open a new terminal."
 else
-    echo "==> Instalando Google Cloud CLI (tarball oficial de Google)..."
+    say "==> Instalando Google Cloud CLI (tarball oficial de Google)..." "==> Installing Google Cloud CLI (official Google tarball)..."
     tmpdir=$(mktemp -d)
     curl -fsSL -o "$tmpdir/gcloud.tar.gz" \
         "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz"
@@ -177,7 +224,8 @@ if [ -f "$HOME/google-cloud-sdk/completion.bash.inc" ]; then
 fi
 EOF
     fi
-    echo "==> gcloud instalado en $GCLOUD_DIR y agregado a ~/.bashrc. Abrí una terminal nueva para tenerlo en el PATH."
+    say "==> gcloud instalado en $GCLOUD_DIR y agregado a ~/.bashrc. Abrí una terminal nueva para tenerlo en el PATH." \
+        "==> gcloud installed at $GCLOUD_DIR and added to ~/.bashrc. Open a new terminal to get it on the PATH."
 fi
 
 # ---------------------------------------------------------------------------
@@ -189,7 +237,7 @@ fi
 # GitHub solo se usa para saber el tag más reciente) y se puede volver a
 # correr cuando quieras para actualizar.
 CSP_DIR="/opt/cloud-sql-proxy"
-echo "==> Instalando/actualizando Cloud SQL Auth Proxy en $CSP_DIR..."
+say "==> Instalando/actualizando Cloud SQL Auth Proxy en $CSP_DIR..." "==> Installing/updating Cloud SQL Auth Proxy at $CSP_DIR..."
 sudo mkdir -p "$CSP_DIR"
 sudo tee "$CSP_DIR/update.sh" > /dev/null <<'CSPEOF'
 #!/bin/bash
@@ -230,14 +278,15 @@ sudo "$CSP_DIR/update.sh"
 sudo ln -sf "$CSP_DIR/cloud-sql-proxy" /usr/local/bin/cloud-sql-proxy
 sudo ln -sf "$CSP_DIR/cloud-sql-proxy" /usr/local/bin/gcloud-proxy
 sudo ln -sf "$CSP_DIR/update.sh" /usr/local/bin/cloud-sql-proxy-update
-echo "==> Comandos listos: cloud-sql-proxy, gcloud-proxy (mismo binario)."
-echo "    Para actualizar en el futuro: sudo cloud-sql-proxy-update"
+say "==> Comandos listos: cloud-sql-proxy, gcloud-proxy (mismo binario)." \
+    "==> Commands ready: cloud-sql-proxy, gcloud-proxy (same binary)."
+echo "    $(ask "Para actualizar en el futuro: sudo cloud-sql-proxy-update" "To update in the future: sudo cloud-sql-proxy-update")"
 
 # ---------------------------------------------------------------------------
 # 4. Tema oscuro por defecto + cursor (sin temas de terceros)
 # ---------------------------------------------------------------------------
 if command -v gsettings >/dev/null 2>&1; then
-    echo "==> Aplicando modo oscuro + cursor breeze-dark vía gsettings..."
+    say "==> Aplicando modo oscuro + cursor breeze-dark vía gsettings..." "==> Applying dark mode + breeze-dark cursor via gsettings..."
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme 'breeze-dark' 2>/dev/null || true
 fi
@@ -247,8 +296,9 @@ fi
 # ---------------------------------------------------------------------------
 mkdir -p "$HOME/Pictures/wallpapers" "$HOME/Pictures/Screenshots"
 if [ ! -e "$HOME/Pictures/wallpapers/wallpaper.jpg" ] && [ ! -e "$HOME/Pictures/wallpapers/wallpaper.png" ]; then
-    echo "==> No hay wallpaper todavía en ~/Pictures/wallpapers/."
-    echo "    Copia ahí tu imagen como 'wallpaper.jpg' (o cambia la ruta en hyprpaper.conf)."
+    say "==> No hay wallpaper todavía en ~/Pictures/wallpapers/." "==> There's no wallpaper yet in ~/Pictures/wallpapers/."
+    say "    Copia ahí tu imagen como 'wallpaper.jpg' (o cambia la ruta en hyprpaper.conf)." \
+        "    Copy your image there as 'wallpaper.jpg' (or change the path in hyprpaper.conf)."
 fi
 
 # ---------------------------------------------------------------------------
@@ -256,136 +306,238 @@ fi
 # ---------------------------------------------------------------------------
 # Stow se niega a pisar un archivo real (no symlink) -- movemos a un backup
 # cualquier cosa que ya exista en esas rutas antes de crear los symlinks.
-echo "==> Revisando conflictos antes de aplicar Stow..."
+say "==> Revisando conflictos antes de aplicar Stow..." "==> Checking for conflicts before applying Stow..."
 found_conflict=false
 for pkg in $STOW_PACKAGES; do
     while IFS= read -r -d '' f; do
         rel="${f#"$DOTFILES_DIR/$pkg/"}"
         target="$HOME/$rel"
-        if [ -e "$target" ] && [ ! -L "$target" ]; then
-            mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
-            mv "$target" "$BACKUP_DIR/$rel"
-            echo "    backup: ~/$rel -> $BACKUP_DIR/$rel"
-            found_conflict=true
+        if [ -e "$target" ]; then
+            # Si target ya resuelve (symlink directo, o por un directorio padre
+            # "tree-folded" de un Stow anterior) al MISMO archivo del repo, ya
+            # está bien enlazado -> no tocar. Sin este chequeo, correr el
+            # script una segunda vez sobre un package ya "tree-folded" (p.ej.
+            # ~/.config/waybar -> ~/dotfiles/waybar/.config/waybar como UN
+            # solo symlink de carpeta) hacía que `-L "$target"` diera falso
+            # para cada archivo de adentro (el symlink es el padre, no el
+            # archivo) y el `mv` de más abajo movía el archivo REAL del repo
+            # al backup -- así es como desaparecieron los archivos de
+            # swaync/walker/waybar/wlogout.
+            if [ "$(readlink -f "$target" 2>/dev/null)" = "$(readlink -f "$f" 2>/dev/null)" ]; then
+                continue
+            fi
+            if [ ! -L "$target" ]; then
+                mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
+                mv "$target" "$BACKUP_DIR/$rel"
+                echo "    backup: ~/$rel -> $BACKUP_DIR/$rel"
+                found_conflict=true
+            fi
         fi
     done < <(find "$DOTFILES_DIR/$pkg" -type f -print0)
 done
 if $found_conflict; then
-    echo "==> Archivos previos respaldados en $BACKUP_DIR"
+    say "==> Archivos previos respaldados en $BACKUP_DIR" "==> Previous files backed up at $BACKUP_DIR"
 else
-    echo "==> No había archivos previos en conflicto, no hizo falta backup de archivos."
+    say "==> No había archivos previos en conflicto, no hizo falta backup de archivos." \
+        "==> No previous conflicting files, no file backup was needed."
 fi
 
-echo "==> Aplicando symlinks con Stow ($STOW_PACKAGES)..."
+say "==> Aplicando symlinks con Stow ($STOW_PACKAGES)..." "==> Applying symlinks with Stow ($STOW_PACKAGES)..."
 cd "$DOTFILES_DIR"
 stow -v -t "$HOME" $STOW_PACKAGES
 
 # ---------------------------------------------------------------------------
-# 7. Identidad de git (se pide siempre, nunca se guarda en el repo)
+# 7. Identidad de git + SSH (opcional -- si decís que no, no se toca nada)
 # ---------------------------------------------------------------------------
 echo ""
-echo "==> Configuración de git (se guarda en ~/.gitconfig.local, fuera del repo)"
-read -rp "Nombre completo para los commits: " git_name
-read -rp "Email para los commits: " git_email
+GIT_CONFIGURED=false
+if ask_yn "¿Configurar git y SSH ahora (nombre/email + keys)? [s/N]: " \
+          "Configure git and SSH now (name/email + keys)? [y/N]: "; then
+    GIT_CONFIGURED=true
 
-cat > "$HOME/.gitconfig.local" <<EOF
+    say "==> Configuración de git (se guarda en ~/.gitconfig.local, fuera del repo)" \
+        "==> Git configuration (saved to ~/.gitconfig.local, outside the repo)"
+    read -rp "$(ask "Nombre completo para los commits: " "Full name for commits: ")" git_name
+    read -rp "$(ask "Email para los commits: " "Email for commits: ")" git_email
+
+    cat > "$HOME/.gitconfig.local" <<EOF
 [user]
     name = $git_name
     email = $git_email
 EOF
-echo "==> ~/.gitconfig.local creado."
+    say "==> ~/.gitconfig.local creado." "==> ~/.gitconfig.local created."
 
-# ---------------------------------------------------------------------------
-# 8. SSH key personal
-# ---------------------------------------------------------------------------
-SSH_KEY="$HOME/.ssh/id_ed25519_personal"
-mkdir -p "$HOME/.ssh"
-chmod 700 "$HOME/.ssh"
+    # -----------------------------------------------------------------
+    # 8. SSH key personal
+    # -----------------------------------------------------------------
+    SSH_KEY="$HOME/.ssh/id_ed25519_personal"
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
 
-if [ -f "$SSH_KEY" ]; then
-    echo "==> Ya existe $SSH_KEY, no se genera de nuevo."
-else
-    echo ""
-    echo "==> Generando key SSH personal (te va a pedir una passphrase, recomendado no dejarla vacía)"
-    ssh-keygen -t ed25519 -C "$git_email" -f "$SSH_KEY"
-fi
+    if [ -f "$SSH_KEY" ]; then
+        say "==> Ya existe $SSH_KEY, no se genera de nuevo." "==> $SSH_KEY already exists, not generating again."
+    else
+        echo ""
+        say "==> Generando key SSH personal (te va a pedir una passphrase, recomendado no dejarla vacía)" \
+            "==> Generating personal SSH key (it will ask for a passphrase, recommended not to leave it empty)"
+        ssh-keygen -t ed25519 -C "$git_email" -f "$SSH_KEY"
+    fi
 
-if ! grep -q "IdentityFile $SSH_KEY" "$HOME/.ssh/config" 2>/dev/null; then
-    cat >> "$HOME/.ssh/config" <<EOF
+    if ! grep -q "IdentityFile $SSH_KEY" "$HOME/.ssh/config" 2>/dev/null; then
+        cat >> "$HOME/.ssh/config" <<EOF
 
 Host github.com
     IdentityFile $SSH_KEY
     AddKeysToAgent yes
 EOF
-    chmod 600 "$HOME/.ssh/config"
-    echo "==> Agregado bloque 'Host github.com' a ~/.ssh/config."
-fi
-
-eval "$(ssh-agent -s)" >/dev/null 2>&1 || true
-ssh-add "$SSH_KEY" 2>/dev/null || true
-
-# ---------------------------------------------------------------------------
-# 8b. SSH key de la cuenta de trabajo (_vantum)
-# ---------------------------------------------------------------------------
-# github.com solo admite una IdentityFile por Host por defecto -> se usa un
-# alias de host ("github-vantum") para poder tener las dos cuentas de GitHub
-# (personal y trabajo) andando a la vez desde la misma máquina.
-echo ""
-read -rp "¿Configurar también la cuenta de trabajo _vantum? [s/N]: " setup_vantum
-if [[ "$setup_vantum" =~ ^[sSyY] ]]; then
-    read -rp "Email de la cuenta de trabajo (_vantum): " vantum_email
-    SSH_KEY_VANTUM="$HOME/.ssh/id_ed25519_vantum"
-
-    if [ -f "$SSH_KEY_VANTUM" ]; then
-        echo "==> Ya existe $SSH_KEY_VANTUM, no se genera de nuevo."
-    else
-        echo "==> Generando key SSH de trabajo (te va a pedir una passphrase)"
-        ssh-keygen -t ed25519 -C "$vantum_email" -f "$SSH_KEY_VANTUM"
+        chmod 600 "$HOME/.ssh/config"
+        say "==> Agregado bloque 'Host github.com' a ~/.ssh/config." "==> Added 'Host github.com' block to ~/.ssh/config."
     fi
 
-    if ! grep -q "Host github-vantum" "$HOME/.ssh/config" 2>/dev/null; then
-        cat >> "$HOME/.ssh/config" <<EOF
+    eval "$(ssh-agent -s)" >/dev/null 2>&1 || true
+    ssh-add "$SSH_KEY" 2>/dev/null || true
 
-Host github-vantum
+    # -----------------------------------------------------------------
+    # 8b. Cuenta alternativa de GitHub (ej. trabajo) -- alias configurable,
+    #     nada hardcodeado (antes era siempre "_vantum").
+    # -----------------------------------------------------------------
+    # github.com solo admite una IdentityFile por Host por defecto -> se usa
+    # un alias de host ("github-<ext>") para tener dos cuentas de GitHub
+    # andando a la vez desde la misma máquina.
+    echo ""
+    if ask_yn "¿Configurar también otra cuenta de GitHub (ej. de trabajo)? [s/N]: " \
+              "Also configure another GitHub account (e.g. work)? [y/N]: "; then
+        read -rp "$(ask "Nombre corto para esa cuenta (ej. 'vantum' -> alias SSH 'github-vantum'): " \
+                        "Short name for that account (e.g. 'vantum' -> SSH alias 'github-vantum'): ")" alt_ext
+        read -rp "$(ask "Email de la cuenta '$alt_ext': " "Email for the '$alt_ext' account: ")" alt_email
+
+        SSH_KEY_ALT="$HOME/.ssh/id_ed25519_${alt_ext}"
+
+        if [ -f "$SSH_KEY_ALT" ]; then
+            say "==> Ya existe $SSH_KEY_ALT, no se genera de nuevo." "==> $SSH_KEY_ALT already exists, not generating again."
+        else
+            say "==> Generando key SSH de la cuenta '$alt_ext' (te va a pedir una passphrase)" \
+                "==> Generating SSH key for the '$alt_ext' account (it will ask for a passphrase)"
+            ssh-keygen -t ed25519 -C "$alt_email" -f "$SSH_KEY_ALT"
+        fi
+
+        if ! grep -q "Host github-$alt_ext" "$HOME/.ssh/config" 2>/dev/null; then
+            cat >> "$HOME/.ssh/config" <<EOF
+
+Host github-$alt_ext
     HostName github.com
     User git
-    IdentityFile $SSH_KEY_VANTUM
+    IdentityFile $SSH_KEY_ALT
     AddKeysToAgent yes
 EOF
-        chmod 600 "$HOME/.ssh/config"
-        echo "==> Agregado bloque 'Host github-vantum' a ~/.ssh/config."
-    fi
+            chmod 600 "$HOME/.ssh/config"
+            say "==> Agregado bloque 'Host github-$alt_ext' a ~/.ssh/config." "==> Added 'Host github-$alt_ext' block to ~/.ssh/config."
+        fi
 
-    ssh-add "$SSH_KEY_VANTUM" 2>/dev/null || true
-    VANTUM_PUB="$SSH_KEY_VANTUM.pub"
+        ssh-add "$SSH_KEY_ALT" 2>/dev/null || true
+        ALT_EXT="$alt_ext"
+        ALT_PUB="$SSH_KEY_ALT.pub"
+    fi
+else
+    say "==> Saltado: git/SSH no configurado (corré el script de nuevo cuando quieras)." \
+        "==> Skipped: git/SSH not configured (run the script again whenever you want)."
+fi
+
+# ---------------------------------------------------------------------------
+# 9. Apps opcionales
+# ---------------------------------------------------------------------------
+echo ""
+say "==> Apps opcionales" "==> Optional apps"
+
+install_aur() {
+    # install_aur <pkg> -- nunca aborta el script si falla (apps opcionales).
+    if ! paru -S --needed --noconfirm "$1"; then
+        say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: paru -S $1" \
+            "==> Could not install '$1'. Install it manually whenever you want: paru -S $1"
+    fi
+}
+
+say "-- Navegador --" "-- Browser --"
+if ask_yn "¿Instalar Google Chrome? [s/N]: " "Install Google Chrome? [y/N]: "; then
+    install_aur google-chrome
+fi
+
+say "-- Música --" "-- Music --"
+if ask_yn "¿Instalar Spotify? [s/N]: " "Install Spotify? [y/N]: "; then
+    install_aur spotify-launcher
+    say "    (Primera vez: corré 'spotify-launcher' para que baje el cliente oficial.)" \
+        "    (First run: run 'spotify-launcher' so it downloads the official client.)"
+fi
+
+say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
+if ask_yn "¿Instalar Codex CLI (OpenAI)? [s/N]: " "Install Codex CLI (OpenAI)? [y/N]: "; then
+    if ! command -v npm >/dev/null 2>&1; then
+        sudo pacman -S --needed --noconfirm nodejs npm
+    fi
+    if ! npm install -g @openai/codex; then
+        say "==> No se pudo instalar Codex CLI vía npm." "==> Could not install Codex CLI via npm."
+    fi
+fi
+if ask_yn "¿Instalar la CLI de Antigravity (Google)? [s/N]: " "Install the Antigravity CLI (Google)? [y/N]: "; then
+    # Nombre de paquete AUR sin confirmar al 100% (herramienta muy nueva) --
+    # se verifica antes de intentar instalar para no cortar el script.
+    if paru -Si antigravity-bin >/dev/null 2>&1; then
+        install_aur antigravity-bin
+    else
+        say "==> No encontré 'antigravity-bin' en AUR. Instalala a mano: https://antigravity.google/" \
+            "==> Could not find 'antigravity-bin' in AUR. Install it manually: https://antigravity.google/"
+    fi
+fi
+
+say "-- IDEs / editores --" "-- IDEs / editors --"
+if ask_yn "¿Instalar Cursor (IDE con IA)? [s/N]: " "Install Cursor (AI IDE)? [y/N]: "; then
+    install_aur cursor-bin
+fi
+if ask_yn "¿Instalar Visual Studio Code? [s/N]: " "Install Visual Studio Code? [y/N]: "; then
+    install_aur visual-studio-code-bin
+fi
+if ask_yn "¿Instalar DataGrip (JetBrains)? [s/N]: " "Install DataGrip (JetBrains)? [y/N]: "; then
+    install_aur datagrip
 fi
 
 echo ""
 echo "=============================================================="
-echo " Listo. Pasos que te faltan a mano:"
+say " Listo. Pasos que te faltan a mano:" " Done. Steps left for you to do by hand:"
 echo ""
-echo " 1) Pega esta clave pública (personal) en GitHub -> Settings -> SSH keys:"
-echo ""
-cat "$SSH_KEY.pub"
-if [ -n "${VANTUM_PUB:-}" ]; then
+if $GIT_CONFIGURED; then
+    say " 1) Pega esta clave pública (personal) en GitHub -> Settings -> SSH keys:" \
+        " 1) Paste this public key (personal) into GitHub -> Settings -> SSH keys:"
     echo ""
-    echo "    Y esta otra en la cuenta de GitHub de trabajo (_vantum):"
-    echo ""
-    cat "$VANTUM_PUB"
-    echo ""
-    echo "    Para clonar repos de trabajo usa el alias, no github.com directo:"
-    echo "    git clone git@github-vantum:ORG/repo.git"
+    cat "$SSH_KEY.pub"
+    if [ -n "${ALT_PUB:-}" ]; then
+        echo ""
+        say "    Y esta otra en la cuenta de GitHub '$ALT_EXT':" "    And this other one into the '$ALT_EXT' GitHub account:"
+        echo ""
+        cat "$ALT_PUB"
+        echo ""
+        say "    Para clonar repos de esa cuenta usa el alias, no github.com directo:" \
+            "    To clone repos from that account use the alias, not github.com directly:"
+        echo "    git clone git@github-$ALT_EXT:ORG/repo.git"
+    fi
+else
+    say " 1) Git/SSH no se configuró en esta corrida -- corré ./install.sh de nuevo cuando quieras." \
+        " 1) Git/SSH was not configured in this run -- run ./install.sh again whenever you want."
 fi
 echo ""
-echo " 2) Cierra sesión y vuelve a entrar a Hyprland (obligatorio: se"
-echo "    pasó de hyprland.conf a hyprland.lua, hyprctl reload no alcanza)."
-echo ""
-echo " 3) Prueba la key personal: ssh -T git@github.com"
-if [ -n "${VANTUM_PUB:-}" ]; then
-    echo "    Prueba la key de trabajo: ssh -T git@github-vantum"
+say " 2) Cierra sesión y vuelve a entrar a Hyprland (obligatorio: se" \
+    " 2) Log out and back into Hyprland (mandatory: it went from"
+say "    pasó de hyprland.conf a hyprland.lua, hyprctl reload no alcanza)." \
+    "    hyprland.conf to hyprland.lua, hyprctl reload isn't enough)."
+if $GIT_CONFIGURED; then
+    echo ""
+    say " 3) Prueba la key personal: ssh -T git@github.com" " 3) Test the personal key: ssh -T git@github.com"
+    if [ -n "${ALT_PUB:-}" ]; then
+        say "    Prueba la otra key: ssh -T git@github-$ALT_EXT" "    Test the other key: ssh -T git@github-$ALT_EXT"
+    fi
 fi
 if $found_conflict; then
     echo ""
-    echo " Backup de tus archivos previos (por si algo no te convence): $BACKUP_DIR"
+    say " Backup de tus archivos previos (por si algo no te convence): $BACKUP_DIR" \
+        " Backup of your previous files (in case something doesn't convince you): $BACKUP_DIR"
 fi
 echo "=============================================================="
