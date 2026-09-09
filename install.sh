@@ -82,7 +82,7 @@ fi
 echo "==> Instalando paquetes de los repos oficiales..."
 sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd \
-    hyprland hyprlock hypridle waybar kitty \
+    hyprland hyprlock hypridle waybar kitty github-cli postgresql \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl
 
 echo "==> Instalando paquetes de AUR (walker, wlogout, elephant)..."
@@ -122,6 +122,116 @@ if ! command -v claude >/dev/null 2>&1; then
 else
     echo "==> Claude Code ya está instalado ($(claude --version 2>/dev/null))."
 fi
+
+# ---------------------------------------------------------------------------
+# 3d. GitHub CLI (gh)
+# ---------------------------------------------------------------------------
+# gh ya se instaló arriba (paquete github-cli). El login es interactivo
+# (abre el navegador o pide un token) así que no se puede automatizar del
+# todo -- si tenés cuenta personal y de trabajo, corré "gh auth login" de
+# nuevo después y usá "gh auth switch" para alternar entre ambas.
+if command -v gh >/dev/null 2>&1; then
+    if gh auth status >/dev/null 2>&1; then
+        echo "==> gh ya tiene una sesión activa ($(gh auth status 2>&1 | grep 'Logged in' | head -1))."
+    else
+        echo ""
+        read -rp "¿Hacer login con 'gh auth login' ahora? [s/N]: " setup_gh
+        if [[ "$setup_gh" =~ ^[sSyY] ]]; then
+            gh auth login
+        else
+            echo "==> Saltado. Corré 'gh auth login' cuando quieras."
+        fi
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 3e. Google Cloud CLI (gcloud) -- instalador oficial de Google, no Arch/AUR
+# ---------------------------------------------------------------------------
+# Google no publica un paquete pacman propio (el de AUR es mantenido por
+# terceros); el método oficial y multi-distro es el tarball + install.sh:
+# https://cloud.google.com/sdk/docs/install-sdk
+GCLOUD_DIR="$HOME/google-cloud-sdk"
+if command -v gcloud >/dev/null 2>&1; then
+    echo "==> gcloud ya está instalado ($(gcloud --version | head -1))."
+elif [ -d "$GCLOUD_DIR" ]; then
+    echo "==> Ya existe $GCLOUD_DIR pero gcloud no está en el PATH -- abrí una terminal nueva."
+else
+    echo "==> Instalando Google Cloud CLI (tarball oficial de Google)..."
+    tmpdir=$(mktemp -d)
+    curl -fsSL -o "$tmpdir/gcloud.tar.gz" \
+        "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz"
+    tar -xf "$tmpdir/gcloud.tar.gz" -C "$HOME"
+    "$GCLOUD_DIR/install.sh" --quiet
+    rm -rf "$tmpdir"
+
+    # --quiet salta los prompts pero NO edita ~/.bashrc -- lo agregamos a mano.
+    if ! grep -q "google-cloud-sdk/path.bash.inc" "$HOME/.bashrc" 2>/dev/null; then
+        cat >> "$HOME/.bashrc" <<'EOF'
+
+# Google Cloud SDK
+if [ -f "$HOME/google-cloud-sdk/path.bash.inc" ]; then
+    source "$HOME/google-cloud-sdk/path.bash.inc"
+fi
+if [ -f "$HOME/google-cloud-sdk/completion.bash.inc" ]; then
+    source "$HOME/google-cloud-sdk/completion.bash.inc"
+fi
+EOF
+    fi
+    echo "==> gcloud instalado en $GCLOUD_DIR y agregado a ~/.bashrc. Abrí una terminal nueva para tenerlo en el PATH."
+fi
+
+# ---------------------------------------------------------------------------
+# 3f. Cloud SQL Auth Proxy (/opt/cloud-sql-proxy)
+# ---------------------------------------------------------------------------
+# Instalado aparte (no como componente de gcloud) para tener un binario fijo
+# en /opt y comandos propios en el PATH. update.sh consulta la última versión
+# publicada en GitHub (los binarios en sí viven en storage.googleapis.com,
+# GitHub solo se usa para saber el tag más reciente) y se puede volver a
+# correr cuando quieras para actualizar.
+CSP_DIR="/opt/cloud-sql-proxy"
+echo "==> Instalando/actualizando Cloud SQL Auth Proxy en $CSP_DIR..."
+sudo mkdir -p "$CSP_DIR"
+sudo tee "$CSP_DIR/update.sh" > /dev/null <<'CSPEOF'
+#!/bin/bash
+# /opt/cloud-sql-proxy/update.sh — instala o actualiza a la última versión.
+# Uso: sudo cloud-sql-proxy-update
+set -e
+
+INSTALL_DIR="/opt/cloud-sql-proxy"
+BIN="$INSTALL_DIR/cloud-sql-proxy"
+
+latest="$(curl -fsSL https://api.github.com/repos/GoogleCloudPlatform/cloud-sql-proxy/releases/latest \
+    | grep -m1 '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+if [ -z "$latest" ]; then
+    echo "No se pudo consultar la última versión en GitHub." >&2
+    exit 1
+fi
+
+current=""
+if [ -x "$BIN" ]; then
+    current="v$("$BIN" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+fi
+
+if [ "$current" = "$latest" ]; then
+    echo "cloud-sql-proxy ya está en la última versión ($latest)."
+    exit 0
+fi
+
+echo "Instalando cloud-sql-proxy $latest (actual: ${current:-ninguna})..."
+tmp="$(mktemp)"
+curl -fsSL -o "$tmp" "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/$latest/cloud-sql-proxy.linux.amd64"
+chmod +x "$tmp"
+mv "$tmp" "$BIN"
+echo "Listo: $BIN -> $latest"
+CSPEOF
+sudo chmod +x "$CSP_DIR/update.sh"
+sudo "$CSP_DIR/update.sh"
+
+sudo ln -sf "$CSP_DIR/cloud-sql-proxy" /usr/local/bin/cloud-sql-proxy
+sudo ln -sf "$CSP_DIR/cloud-sql-proxy" /usr/local/bin/gcloud-proxy
+sudo ln -sf "$CSP_DIR/update.sh" /usr/local/bin/cloud-sql-proxy-update
+echo "==> Comandos listos: cloud-sql-proxy, gcloud-proxy (mismo binario)."
+echo "    Para actualizar en el futuro: sudo cloud-sql-proxy-update"
 
 # ---------------------------------------------------------------------------
 # 4. Tema oscuro por defecto + cursor (sin temas de terceros)
