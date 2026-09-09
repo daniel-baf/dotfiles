@@ -471,9 +471,22 @@ fi
 
 say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
 if ask_yn "¿Instalar Codex CLI (OpenAI)? [s/N]: " "Install Codex CLI (OpenAI)? [y/N]: "; then
-    if ! command -v npm >/dev/null 2>&1; then
-        sudo pacman -S --needed --noconfirm nodejs npm
+    # Node vía nvm (no vía pacman): pacman instala en /usr/lib/node_modules,
+    # que es de root -> "npm install -g" sin sudo tira EACCES. nvm instala
+    # Node dentro de $HOME, así "npm install -g" funciona sin sudo.
+    NVM_DIR="$HOME/.nvm"
+    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        say "==> Instalando nvm (Node en \$HOME, para que 'npm install -g' no necesite sudo)..." \
+            "==> Installing nvm (Node under \$HOME, so 'npm install -g' doesn't need sudo)..."
+        nvm_latest="$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest \
+            | grep -m1 '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+        curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest:-v0.40.1}/install.sh" | bash
     fi
+    export NVM_DIR="$HOME/.nvm"
+    # shellcheck disable=SC1091
+    . "$NVM_DIR/nvm.sh"
+    nvm install --lts
+
     if ! npm install -g @openai/codex; then
         say "==> No se pudo instalar Codex CLI vía npm." "==> Could not install Codex CLI via npm."
     fi
