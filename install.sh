@@ -36,6 +36,17 @@ case "$lang_choice" in
     *) LOCALE="es" ;;
 esac
 
+# Layout de teclado por defecto para Hyprland (ver hyprland.lua): en inglés
+# arranca en "us", en español en "latam". Se guarda fuera del repo porque
+# hyprland.lua está gestionado con Stow -- no queremos que install.sh deje
+# el repo "sucio" en cada corrida.
+mkdir -p "$HOME/.config/hypr"
+if [ "$LOCALE" = "en" ]; then
+    echo "us,latam" > "$HOME/.config/hypr/.kb_layout"
+else
+    echo "latam,us" > "$HOME/.config/hypr/.kb_layout"
+fi
+
 # say "<es>" "<en>"            -> imprime el mensaje con salto de línea
 # ask "<es prompt>" "<en prompt>" -> lo mismo pero sin salto, para read -rp "$(ask ...)"
 say() {
@@ -535,6 +546,9 @@ if ask_yn "¿Instalar Spotify? [s/N]: " "Install Spotify? [y/N]: "; then
 fi
 
 say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
+if ask_yn "¿Instalar OpenCode? [s/N]: " "Install OpenCode? [y/N]: "; then
+    sudo pacman -S --needed --noconfirm opencode
+fi
 if ask_yn "¿Instalar Codex CLI (OpenAI)? [s/N]: " "Install Codex CLI (OpenAI)? [y/N]: "; then
     ensure_nvm_node
     if ! npm install -g @openai/codex; then

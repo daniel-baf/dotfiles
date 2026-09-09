@@ -123,9 +123,21 @@ hl.config({
     },
 })
 
+-- Layout de teclado por defecto: "latam" (ES) o "us" (EN) según lo elegido
+-- en install.sh, guardado en ~/.config/hypr/.kb_layout (fuera del repo, no
+-- gestionado por Stow). SUPER+Espacio alterna entre los dos igual.
+local function read_first_line(path)
+    local f = io.open(path, "r")
+    if not f then return nil end
+    local line = f:read("l")
+    f:close()
+    return line
+end
+local kbLayout = read_first_line(os.getenv("HOME") .. "/.config/hypr/.kb_layout") or "latam,us"
+
 hl.config({
     input = {
-        kb_layout = "latam,us",
+        kb_layout = kbLayout,
         kb_options = "grp:win_space_toggle",
         follow_mouse = 1,
         sensitivity = 0,
