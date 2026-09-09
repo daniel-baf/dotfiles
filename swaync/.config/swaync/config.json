@@ -36,8 +36,8 @@
             "text": "No molestar"
         },
         "mpris": {
-            "image-size": 80,
-            "blur": true
+            "image-size": 48,
+            "blur": false
         }
     }
 }

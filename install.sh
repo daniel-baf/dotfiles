@@ -531,7 +531,9 @@ if ask_yn "¿Instalar Visual Studio Code? [s/N]: " "Install Visual Studio Code? 
     install_aur visual-studio-code-bin
 fi
 if ask_yn "¿Instalar DataGrip (JetBrains)? [s/N]: " "Install DataGrip (JetBrains)? [y/N]: "; then
+    # datagrip solo no abre -- hace falta también datagrip-jre (el runtime).
     install_aur datagrip
+    install_aur datagrip-jre
 fi
 
 echo ""
