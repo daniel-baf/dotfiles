@@ -27,8 +27,11 @@ hl.env("QT_QPA_PLATFORMTHEME", "gtk2")
 ---- MONITOR -----
 ------------------
 
--- eDP-1, panel único del Legion (dato real: hyprctl monitors)
-hl.monitor({ output = "eDP-1", mode = "2560x1600@165", position = "0x0", scale = 1.2 })
+-- eDP-1, panel único del Legion (dato real: hyprctl monitors).
+-- scale = 1.25, no 1.2: 2560x1600 / 1.2 = 2133.33x1333.33 (no da píxeles
+-- lógicos enteros) -> Hyprland lo rechaza y aplica 1.25 (2048x1280, entero)
+-- solo, avisando en cada arranque. 1.25 evita ese aviso.
+hl.monitor({ output = "eDP-1", mode = "2560x1600@165", position = "0x0", scale = 1.25 })
 
 ---------------------
 ---- MY PROGRAMS ----
