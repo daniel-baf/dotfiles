@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr waybar walker swaync wlogout"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
@@ -49,6 +49,26 @@ ask_yn() {
     local ans
     read -rp "$(ask "$1" "$2")" ans
     [[ "$ans" =~ ^[sSyY] ]]
+}
+
+ensure_nvm_node() {
+    # Instala Node vía nvm (dentro de $HOME, sin sudo) la primera vez que se
+    # necesita, y lo deja disponible para el resto de esta corrida del
+    # script. pacman instala nodejs/npm en /usr (root), lo que rompe
+    # "npm install -g" sin sudo -- por eso Node se maneja acá con nvm.
+    local NVM_DIR="$HOME/.nvm"
+    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        say "==> Instalando nvm (Node en \$HOME, para que 'npm install -g' no necesite sudo)..." \
+            "==> Installing nvm (Node under \$HOME, so 'npm install -g' doesn't need sudo)..."
+        local nvm_latest
+        nvm_latest="$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest \
+            | grep -m1 '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+        curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest:-v0.40.1}/install.sh" | bash
+    fi
+    export NVM_DIR="$HOME/.nvm"
+    # shellcheck disable=SC1091
+    . "$NVM_DIR/nvm.sh"
+    nvm install --lts >/dev/null
 }
 
 say "==> Dotfiles en: $DOTFILES_DIR" "==> Dotfiles at: $DOTFILES_DIR"
@@ -117,7 +137,8 @@ sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
-    networkmanager network-manager-applet
+    networkmanager network-manager-applet \
+    glow graphviz poppler librsvg python-pillow
 
 say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays)..." \
     "==> Installing AUR packages (walker, wlogout, elephant, nwg-displays)..."
@@ -347,6 +368,21 @@ cd "$DOTFILES_DIR"
 stow -v -t "$HOME" $STOW_PACKAGES
 
 # ---------------------------------------------------------------------------
+# 6b. Preview de markdown/imágenes/PDF/diagramas en ranger (glow, graphviz,
+#     poppler y librsvg ya se instalaron arriba; mermaid-cli va por npm/nvm).
+#     Config real en ranger/.config/ranger/{rc.conf,scope.sh}.
+# ---------------------------------------------------------------------------
+say "==> Instalando mermaid-cli (diagramas Mermaid en ranger)..." "==> Installing mermaid-cli (Mermaid diagrams in ranger)..."
+ensure_nvm_node
+if ! npm list -g @mermaid-js/mermaid-cli >/dev/null 2>&1; then
+    npm install -g @mermaid-js/mermaid-cli || \
+        say "==> No se pudo instalar mermaid-cli. Los .mmd no van a tener preview hasta instalarlo a mano." \
+            "==> Could not install mermaid-cli. .mmd files won't preview until you install it by hand."
+fi
+say "==> PlantUML necesita Java + el paquete 'plantuml' -- instalalo si lo usás: sudo pacman -S jre-openjdk plantuml" \
+    "==> PlantUML needs Java + the 'plantuml' package -- install it if you use it: sudo pacman -S jre-openjdk plantuml"
+
+# ---------------------------------------------------------------------------
 # 7. Identidad de git + SSH (opcional -- si decís que no, no se toca nada)
 # ---------------------------------------------------------------------------
 echo ""
@@ -471,22 +507,7 @@ fi
 
 say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
 if ask_yn "¿Instalar Codex CLI (OpenAI)? [s/N]: " "Install Codex CLI (OpenAI)? [y/N]: "; then
-    # Node vía nvm (no vía pacman): pacman instala en /usr/lib/node_modules,
-    # que es de root -> "npm install -g" sin sudo tira EACCES. nvm instala
-    # Node dentro de $HOME, así "npm install -g" funciona sin sudo.
-    NVM_DIR="$HOME/.nvm"
-    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-        say "==> Instalando nvm (Node en \$HOME, para que 'npm install -g' no necesite sudo)..." \
-            "==> Installing nvm (Node under \$HOME, so 'npm install -g' doesn't need sudo)..."
-        nvm_latest="$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest \
-            | grep -m1 '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
-        curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest:-v0.40.1}/install.sh" | bash
-    fi
-    export NVM_DIR="$HOME/.nvm"
-    # shellcheck disable=SC1091
-    . "$NVM_DIR/nvm.sh"
-    nvm install --lts
-
+    ensure_nvm_node
     if ! npm install -g @openai/codex; then
         say "==> No se pudo instalar Codex CLI vía npm." "==> Could not install Codex CLI via npm."
     fi
