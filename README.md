@@ -13,6 +13,7 @@ Config de Hyprland (Legion Pro 7, solo NVIDIA) gestionada con [GNU Stow](https:/
 | `walker`  | Launcher (`SUPER + R`)                           |
 | `swaync`  | Notificaciones                                   |
 | `wlogout` | Menú de apagado/logout (`SUPER + M`)             |
+| `sddm`    | Tema de la pantalla de login (`tokyo-night`), no va con Stow: `install.sh` lo copia a `/usr/share/sddm/themes/` |
 
 ## Uso en una PC nueva
 

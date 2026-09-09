@@ -137,7 +137,7 @@ sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
-    networkmanager network-manager-applet \
+    networkmanager network-manager-applet sddm \
     glow graphviz poppler librsvg python-pillow
 
 say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays)..." \
@@ -302,6 +302,35 @@ sudo ln -sf "$CSP_DIR/update.sh" /usr/local/bin/cloud-sql-proxy-update
 say "==> Comandos listos: cloud-sql-proxy, gcloud-proxy (mismo binario)." \
     "==> Commands ready: cloud-sql-proxy, gcloud-proxy (same binary)."
 echo "    $(ask "Para actualizar en el futuro: sudo cloud-sql-proxy-update" "To update in the future: sudo cloud-sql-proxy-update")"
+
+# ---------------------------------------------------------------------------
+# 3g. SDDM (login manager) -- tema "tokyo-night" a juego con el resto del
+#     escritorio (mismos colores/estilo que hyprlock.conf y waybar/style.css:
+#     isla flotante translúcida, reloj grande, acentos azul/violeta). Vive en
+#     sddm/tokyo-night/ del repo pero NO se gestiona con Stow porque
+#     /usr/share/sddm no está bajo $HOME -- se copia a mano.
+# ---------------------------------------------------------------------------
+say "==> Instalando tema de SDDM (tokyo-night)..." "==> Installing the SDDM theme (tokyo-night)..."
+sudo mkdir -p /usr/share/sddm/themes
+sudo rm -rf /usr/share/sddm/themes/tokyo-night
+sudo cp -r "$DOTFILES_DIR/sddm/tokyo-night" /usr/share/sddm/themes/tokyo-night
+
+sudo mkdir -p /etc/sddm.conf.d
+sudo tee /etc/sddm.conf.d/10-theme.conf > /dev/null <<'EOF'
+[Theme]
+Current=tokyo-night
+CursorTheme=breeze-dark
+EOF
+
+if ! systemctl is-enabled sddm.service >/dev/null 2>&1; then
+    sudo systemctl enable sddm.service
+fi
+
+say "==> Tema de SDDM listo. Para verlo sin cerrar tu sesión actual (abre una ventana de prueba):" \
+    "==> SDDM theme ready. To preview it without touching your current session (opens a test window):"
+echo "    sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/tokyo-night"
+say "    El cambio real se ve la próxima vez que cierres sesión o reinicies." \
+    "    The real change shows up next time you log out or reboot."
 
 # ---------------------------------------------------------------------------
 # 4. Tema oscuro por defecto + cursor (sin temas de terceros)

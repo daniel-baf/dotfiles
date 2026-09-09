@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=tokyo-night
+Description=Tema Tokyo Night a juego con Hyprland/Waybar/hyprlock/wlogout
+Author=Daniel Bautista
+Copyright=(c) 2026, Daniel Bautista
+License=MIT
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=tokyo-night
+Theme-API=2.0
