@@ -146,6 +146,7 @@ fi
 say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages from the official repos..."
 sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd less \
+    bash-completion \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
     networkmanager network-manager-applet sddm \
