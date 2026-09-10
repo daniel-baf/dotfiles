@@ -54,7 +54,19 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
 end)
 hl.on("hyprland.start", function()
-    hl.exec_cmd("pkill hyprpaper; hyprpaper -c ~/.config/hypr/hyprpaper.conf")
+    -- El paquete de hyprpaper instalado no aplica el wallpaper si se declara
+    -- en hyprpaper.conf (bug: "preload" por IPC falla y las directivas del
+    -- config se leen antes de que el output esté listo). Por eso se lanza
+    -- hyprpaper solo con IPC activado y se manda "wallpaper" por hyprctl
+    -- con reintentos hasta que el socket IPC responde. Ver hyprpaper.conf.
+    hl.exec_cmd([[
+        pkill hyprpaper
+        hyprpaper -c ~/.config/hypr/hyprpaper.conf &
+        for i in $(seq 1 20); do
+            hyprctl hyprpaper wallpaper ",$HOME/Pictures/wallpapers/wallpaper.jpg" >/dev/null 2>&1 && break
+            sleep 0.3
+        done
+    ]])
 end)
 hl.on("hyprland.start", function()
     hl.exec_cmd("swaync")
@@ -174,6 +186,12 @@ hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "l" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "r" }))
 hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "u" }))
 hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "d" }))
+
+-- Mover ventana (intercambia de lugar con la vecina en esa dirección)
+hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "l" }))
+hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "r" }))
+hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "u" }))
+hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "d" }))
 
 -- Mouse
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })

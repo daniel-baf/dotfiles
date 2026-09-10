@@ -145,7 +145,7 @@ fi
 # ---------------------------------------------------------------------------
 say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages from the official repos..."
 sudo pacman -S --needed --noconfirm \
-    stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd \
+    stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd less \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
     networkmanager network-manager-applet sddm \
@@ -444,9 +444,14 @@ EOF
     say "==> ~/.gitconfig.local creado." "==> ~/.gitconfig.local created."
 
     # -----------------------------------------------------------------
-    # 8. SSH key personal
+    # 8. SSH key personal -- el nombre de archivo usa tu usuario de GitHub,
+    #    no un "_personal" fijo (así se distingue a simple vista de cuentas
+    #    alternativas creadas después, ej. id_ed25519_trabajo).
     # -----------------------------------------------------------------
-    SSH_KEY="$HOME/.ssh/id_ed25519_personal"
+    read -rp "$(ask "Usuario de GitHub de tu cuenta personal (para nombrar la key, ej. 'daniel-baf'): " \
+                    "GitHub username for your personal account (used to name the key, e.g. 'daniel-baf'): ")" gh_user
+    gh_user="${gh_user:-personal}"
+    SSH_KEY="$HOME/.ssh/id_ed25519_${gh_user}"
     mkdir -p "$HOME/.ssh"
     chmod 700 "$HOME/.ssh"
 
@@ -513,6 +518,50 @@ EOF
         ssh-add "$SSH_KEY_ALT" 2>/dev/null || true
         ALT_EXT="$alt_ext"
         ALT_PUB="$SSH_KEY_ALT.pub"
+
+        # -------------------------------------------------------------
+        # 8c. Carpeta para esta cuenta -- en vez de acordarse qué orgs
+        #     pertenecen a cada cuenta (y tener que mantener esa lista al
+        #     día), la key/email se elige por DÓNDE clonás, no por DE QUIÉN
+        #     es el repo. Cualquier repo (de cualquier org, o incluso
+        #     personal) clonado dentro de esa carpeta usa esta cuenta.
+        #
+        #     Funciona con "git clone git@github.com:ORG/repo.git" normal
+        #     -- no hace falta el alias github-<ext> a mano -- porque git
+        #     ya crea el .git de destino antes de conectarse por red, y
+        #     [includeIf "gitdir:..."] matchea contra esa ruta.
+        # -------------------------------------------------------------
+        echo ""
+        read -rp "$(ask "Carpeta donde vas a clonar los repos de '$alt_ext' (ej. ~/work): " \
+                        "Folder where you'll clone '$alt_ext' repos (e.g. ~/work): ")" alt_dir
+        alt_dir="${alt_dir/#\~/$HOME}"
+        if [ -n "$alt_dir" ]; then
+            mkdir -p "$alt_dir"
+            ALT_GITCONFIG="$HOME/.gitconfig-$alt_ext"
+            # -F /dev/null es necesario: sin eso, ssh además suma el
+            # IdentityFile del bloque "Host github.com" de ~/.ssh/config (la
+            # key personal) a la lista de identidades candidatas -- si esa
+            # key también está registrada en GitHub, gana ella igual aunque
+            # acá se especifique "-i" con la de trabajo. -F /dev/null hace
+            # que ssh ignore por completo ~/.ssh/config para esta conexión,
+            # dejando SOLO la identidad pasada por -i.
+            cat > "$ALT_GITCONFIG" <<EOF
+[user]
+    email = $alt_email
+[core]
+    sshCommand = ssh -F /dev/null -i $SSH_KEY_ALT -o IdentitiesOnly=yes
+EOF
+            if ! grep -qF "gitdir:$alt_dir/" "$HOME/.gitconfig.local" 2>/dev/null; then
+                cat >> "$HOME/.gitconfig.local" <<EOF
+
+[includeIf "gitdir:$alt_dir/"]
+    path = $ALT_GITCONFIG
+EOF
+                say "==> Todo lo que clones dentro de $alt_dir/ va a usar la cuenta '$alt_ext' (key + email) automáticamente." \
+                    "==> Everything you clone inside $alt_dir/ will automatically use the '$alt_ext' account (key + email)."
+            fi
+            ALT_DIR="$alt_dir"
+        fi
     fi
 else
     say "==> Saltado: git/SSH no configurado (corré el script de nuevo cuando quieras)." \
@@ -594,9 +643,17 @@ if $GIT_CONFIGURED; then
         echo ""
         cat "$ALT_PUB"
         echo ""
-        say "    Para clonar repos de esa cuenta usa el alias, no github.com directo:" \
-            "    To clone repos from that account use the alias, not github.com directly:"
-        echo "    git clone git@github-$ALT_EXT:ORG/repo.git"
+        if [ -n "${ALT_DIR:-}" ]; then
+            say "    Cloná los repos de esa cuenta DENTRO de $ALT_DIR/ -- ahí adentro se usa" \
+                "    Clone that account's repos INSIDE $ALT_DIR/ -- inside that folder it"
+            say "    la key y el email de '$ALT_EXT' solos, sea cual sea el org/dueño del repo:" \
+                "    automatically uses the '$ALT_EXT' key and email, whatever the repo's org/owner is:"
+            echo "    git clone git@github.com:ORG/repo.git   # (parado adentro de $ALT_DIR/)"
+        else
+            say "    Para clonar repos de esa cuenta usa el alias, no github.com directo:" \
+                "    To clone repos from that account use the alias, not github.com directly:"
+            echo "    git clone git@github-$ALT_EXT:ORG/repo.git"
+        fi
     fi
 else
     say " 1) Git/SSH no se configuró en esta corrida -- corré ./install.sh de nuevo cuando quieras." \
