@@ -214,6 +214,8 @@ else
     say "==> Claude Code ya está instalado ($(claude --version 2>/dev/null))." \
         "==> Claude Code is already installed ($(claude --version 2>/dev/null))."
 fi
+say "==> Tip: para que los commits/PRs de Claude Code no lleven attribution (Co-Authored-By, etc), poné en ~/.claude/settings.json: \"attribution\": { \"commit\": \"\", \"pr\": \"\" }." \
+    "==> Tip: to stop Claude Code commits/PRs from carrying attribution (Co-Authored-By, etc), set in ~/.claude/settings.json: \"attribution\": { \"commit\": \"\", \"pr\": \"\" }."
 
 # ---------------------------------------------------------------------------
 # 3d. GitHub CLI (gh)
