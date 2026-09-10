@@ -1,0 +1,7 @@
+[Unit]
+Description=elephant - data provider backend para Walker
+
+[Service]
+ExecStart=/usr/bin/elephant
+Restart=on-failure
+RestartSec=1

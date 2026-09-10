@@ -79,7 +79,20 @@ hl.on("hyprland.start", function()
     -- auto_detect_launch_prefix: sin eso, elephant envuelve cada app con
     -- "systemd-run --user", que sin UWSM no hereda WAYLAND_DISPLAY/XDG_RUNTIME_DIR/
     -- PATH -- las apps abrían pero sin audio (les pasaba a Spotify, Discord, etc.)
-    hl.exec_cmd("pkill elephant; elephant")
+    --
+    -- Corre como servicio de systemd --user (unit en
+    -- ~/.config/systemd/user/elephant.service, paquete stow "elephant") en
+    -- vez de proceso suelto: si se cae (pasó varias veces) se reinicia solo
+    -- (Restart=on-failure) y queda log real en
+    -- "journalctl --user -u elephant.service" para diagnosticar la próxima.
+    --
+    -- El historial de portapapeles que se ve en Walker (":") lo guarda
+    -- elephant en su propio archivo (~/.cache/elephant/clipboard.gob) --
+    -- NO usa cliphist pese a lo que decía este comentario antes -- así que
+    -- para que no persista de una sesión a otra hay que borrar ESE archivo
+    -- (con el servicio parado, para no pisarlo mientras escribe) antes de
+    -- levantarlo de nuevo.
+    hl.exec_cmd("systemctl --user daemon-reload; systemctl --user stop elephant.service; rm -f ~/.cache/elephant/clipboard.gob; systemctl --user start elephant.service")
 end)
 hl.on("hyprland.start", function()
     -- servicio de walker: precarga la ventana para que SUPER+R la muestre al instante
@@ -100,15 +113,6 @@ hl.on("hyprland.start", function()
     -- permisos (montar discos, gparted, ...). En Hyprland no lo lanza nadie
     -- solo -- sin esto, esas apps fallan en silencio.
     hl.exec_cmd("pkill -f polkit-kde-authentication-agent-1; /usr/lib/polkit-kde-authentication-agent-1")
-end)
-hl.on("hyprland.start", function()
-    -- Historial del portapapeles (como Klipper en KDE): todo lo copiado se
-    -- guarda con cliphist y se recupera desde walker (provider
-    -- elephant-clipboard, Ctrl+D sobre una entrada la borra). "cliphist wipe"
-    -- vacía el historial en cada arranque de Hyprland (login/reinicio) para
-    -- que no persista de una sesión a otra; "wl-paste --watch" escucha cada
-    -- copiado de ahí en más y lo manda al store.
-    hl.exec_cmd("pkill -f 'wl-paste --watch'; cliphist wipe; wl-paste --watch cliphist store")
 end)
 
 -----------------------

@@ -151,11 +151,13 @@ say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages
 # polkit-kde-agent: diálogo de contraseña para apps GUI que elevan permisos
 #   (se lanza desde hyprland.lua en el autostart).
 # btop: monitor de recursos (SUPER+B) / trash-cli: papelera para ranger (tecla D).
-# cliphist + wl-clipboard: historial del portapapeles estilo Klipper (se
-#   consulta desde walker, provider elephant-clipboard; persiste entre reinicios).
+# wl-clipboard: da wl-copy/wl-paste, que usa el provider elephant-clipboard
+#   para escuchar el portapapeles (su historial vive en
+#   ~/.cache/elephant/clipboard.gob, NO en cliphist -- ese paquete no hace
+#   falta, quedó descartado tras confirmar que elephant no lo usa).
 sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd less \
-    bash-completion fzf btop trash-cli cliphist wl-clipboard \
+    bash-completion fzf btop trash-cli wl-clipboard \
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk polkit-kde-agent \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
@@ -169,8 +171,9 @@ say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays, pw
 # buscar algo -- sin él, walker abre y falla en silencio. Se instalan solo los
 # providers que usamos (apps/calc/runner/files/clipboard), no "elephant-all-bin"
 # (ese arrastra 1Password/Bitwarden/apt/dnf/rpm/niri, nada de lo que usamos aquí).
-# elephant-clipboard: historial del portapapeles en walker (backend cliphist,
-# que se instala desde los repos oficiales más arriba).
+# elephant-clipboard: historial del portapapeles en walker (guarda su propio
+# historial en ~/.cache/elephant/clipboard.gob, usando wl-paste de wl-clipboard
+# -- instalado en los repos oficiales más arriba -- para escuchar copiados).
 # nwg-displays: GUI para acomodar/duplicar/extender pantallas (SUPER+P).
 paru -S --needed --noconfirm walker wlogout nwg-displays pwvucontrol \
     elephant-bin elephant-desktopapplications-bin elephant-calc-bin \
