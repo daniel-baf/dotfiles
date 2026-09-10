@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
@@ -160,6 +160,7 @@ sudo pacman -S --needed --noconfirm \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
     networkmanager network-manager-applet sddm \
+    bluez bluez-utils blueman \
     glow graphviz poppler librsvg python-pillow
 
 say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays, pwvucontrol)..." \
@@ -173,7 +174,8 @@ say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays, pw
 # nwg-displays: GUI para acomodar/duplicar/extender pantallas (SUPER+P).
 paru -S --needed --noconfirm walker wlogout nwg-displays pwvucontrol \
     elephant-bin elephant-desktopapplications-bin elephant-calc-bin \
-    elephant-runner-bin elephant-files-bin elephant-clipboard-bin
+    elephant-runner-bin elephant-files-bin elephant-clipboard-bin \
+    elephant-bluetooth-bin
 
 # ---------------------------------------------------------------------------
 # 3a. NetworkManager (obligatorio: sin esto no hay forma de conectarse a
@@ -351,6 +353,14 @@ say "==> Tema de SDDM listo. Para verlo sin cerrar tu sesión actual (abre una v
 echo "    sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/tokyo-night"
 say "    El cambio real se ve la próxima vez que cierres sesión o reinicies." \
     "    The real change shows up next time you log out or reboot."
+
+# ---------------------------------------------------------------------------
+# 3h. Bluetooth (bluez + blueman como GUI; el ícono de bandeja "blueman-applet"
+#     -- ver el autostart en hyprland.lua -- es el único indicador, sin
+#     duplicar módulo en waybar)
+# ---------------------------------------------------------------------------
+say "==> Habilitando Bluetooth..." "==> Enabling Bluetooth..."
+sudo systemctl enable --now bluetooth.service
 
 # ---------------------------------------------------------------------------
 # 4. Tema oscuro por defecto + cursor (sin temas de terceros)
@@ -613,6 +623,9 @@ install_aur() {
     fi
 }
 
+say "-- Grabación/streaming --" "-- Recording/streaming --"
+install_pacman obs-studio
+
 say "-- Navegador y música --" "-- Browser and music --"
 install_aur google-chrome
 if ! have_pkg spotify-launcher; then
@@ -640,6 +653,15 @@ elif paru -Si antigravity-bin >/dev/null 2>&1; then
 else
     say "==> No encontré 'antigravity-bin' en AUR. Instalala a mano: https://antigravity.google/" \
         "==> Could not find 'antigravity-bin' in AUR. Install it manually: https://antigravity.google/"
+fi
+if ! command -v agy >/dev/null 2>&1; then
+    say "==> Instalando la CLI de Antigravity (agy)..." "==> Installing the Antigravity CLI (agy)..."
+    if ! curl -fsSL https://antigravity.google/cli/install.sh | bash; then
+        say "==> No se pudo instalar la CLI de Antigravity. Instalala a mano: curl -fsSL https://antigravity.google/cli/install.sh | bash" \
+            "==> Could not install the Antigravity CLI. Install it manually: curl -fsSL https://antigravity.google/cli/install.sh | bash"
+    fi
+else
+    say "==> La CLI de Antigravity (agy) ya está instalada." "==> The Antigravity CLI (agy) is already installed."
 fi
 
 say "-- IDEs / editores --" "-- IDEs / editors --"

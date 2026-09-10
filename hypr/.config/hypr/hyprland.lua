@@ -90,6 +90,12 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("pkill nm-applet; nm-applet --indicator")
 end)
 hl.on("hyprland.start", function()
+    -- ícono de bluetooth en la bandeja (tray de waybar), único indicador
+    -- (sin módulo duplicado en waybar): click muestra dispositivos/acciones,
+    -- igual que nm-applet para wifi
+    hl.exec_cmd("pkill blueman-applet; blueman-applet")
+end)
+hl.on("hyprland.start", function()
     -- Agente de polkit: el diálogo de contraseña cuando una app GUI necesita
     -- permisos (montar discos, gparted, ...). En Hyprland no lo lanza nadie
     -- solo -- sin esto, esas apps fallan en silencio.
@@ -97,10 +103,12 @@ hl.on("hyprland.start", function()
 end)
 hl.on("hyprland.start", function()
     -- Historial del portapapeles (como Klipper en KDE): todo lo copiado se
-    -- guarda con cliphist (persiste entre reinicios hasta borrarlo) y se
-    -- recupera desde walker (provider elephant-clipboard). "wl-paste --watch"
-    -- escucha cada copiado y lo manda al store.
-    hl.exec_cmd("pkill -f 'wl-paste --watch'; wl-paste --watch cliphist store")
+    -- guarda con cliphist y se recupera desde walker (provider
+    -- elephant-clipboard, Ctrl+D sobre una entrada la borra). "cliphist wipe"
+    -- vacía el historial en cada arranque de Hyprland (login/reinicio) para
+    -- que no persista de una sesión a otra; "wl-paste --watch" escucha cada
+    -- copiado de ahí en más y lo manda al store.
+    hl.exec_cmd("pkill -f 'wl-paste --watch'; cliphist wipe; wl-paste --watch cliphist store")
 end)
 
 -----------------------

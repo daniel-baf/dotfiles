@@ -19,7 +19,6 @@
         "memory",
         "custom/capslock",
         "custom/numlock",
-        "network",
         "pulseaudio",
         "battery",
         "custom/notifications",
@@ -84,13 +83,6 @@
         "interval": 1
     },
 
-    "network": {
-        "format-wifi": " {essid} ({signalStrength}%)",
-        "format-ethernet": " {ifname}",
-        "format-disconnected": "⚠ desconectado",
-        "tooltip-format": "{ipaddr}/{cidr}"
-    },
-
     "pulseaudio": {
         "format": "{icon} {volume}%",
         "format-muted": " muted",
@@ -115,6 +107,13 @@
     "custom/notifications": {
         "exec": "swaync-client -swb",
         "return-type": "json",
+        "format": "{icon} {}",
+        "format-icons": {
+            "notification": "",
+            "none": "",
+            "dnd-notification": "",
+            "dnd-none": ""
+        },
         "on-click": "swaync-client -t -sw",
         "escape": true
     },
