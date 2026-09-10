@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman chrome spotify"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
