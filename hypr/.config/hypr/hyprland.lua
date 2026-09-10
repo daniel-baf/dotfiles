@@ -75,6 +75,10 @@ hl.on("hyprland.start", function()
     -- walker (SUPER+R) necesita elephant corriendo de fondo como backend de datos
     -- (paquetes AUR: elephant-bin, elephant-desktopapplications-bin, elephant-calc-bin,
     --  elephant-runner-bin, elephant-files-bin — instalados por install.sh)
+    -- ~/.config/elephant/elephant.toml (paquete stow "elephant") desactiva el
+    -- auto_detect_launch_prefix: sin eso, elephant envuelve cada app con
+    -- "systemd-run --user", que sin UWSM no hereda WAYLAND_DISPLAY/XDG_RUNTIME_DIR/
+    -- PATH -- las apps abrían pero sin audio (les pasaba a Spotify, Discord, etc.)
     hl.exec_cmd("pkill elephant; elephant")
 end)
 hl.on("hyprland.start", function()

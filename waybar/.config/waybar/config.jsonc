@@ -98,6 +98,7 @@
             "default": ["", "", ""]
         },
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-right": "pwvucontrol",
         "scroll-step": 5
     },
 

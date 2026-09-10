@@ -1,0 +1,5 @@
+# Sin esto, elephant envuelve cada app lanzada (desde Walker) con
+# "systemd-run --user", que sin UWSM no hereda WAYLAND_DISPLAY/XDG_RUNTIME_DIR/
+# PATH de la sesión -- las apps abrían pero sin audio (Spotify, Discord, etc.).
+# https://forum.hypr.land/t/opening-discord-through-walker-causes-it-to-run-under-xwayland-imp-read-description/896/4
+auto_detect_launch_prefix = false

@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
@@ -151,14 +151,14 @@ sudo pacman -S --needed --noconfirm \
     networkmanager network-manager-applet sddm \
     glow graphviz poppler librsvg python-pillow
 
-say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays)..." \
-    "==> Installing AUR packages (walker, wlogout, elephant, nwg-displays)..."
+say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays, pwvucontrol)..." \
+    "==> Installing AUR packages (walker, wlogout, elephant, nwg-displays, pwvucontrol)..."
 # walker (SUPER+R) necesita el backend "elephant" corriendo aparte para poder
 # buscar algo -- sin él, walker abre y falla en silencio. Se instalan solo los
 # providers que usamos (apps/calc/runner/files), no "elephant-all-bin" (ese
 # arrastra 1Password/Bitwarden/apt/dnf/rpm/niri, nada de lo que usamos aquí).
 # nwg-displays: GUI para acomodar/duplicar/extender pantallas (SUPER+P).
-paru -S --needed --noconfirm walker wlogout nwg-displays \
+paru -S --needed --noconfirm walker wlogout nwg-displays pwvucontrol \
     elephant-bin elephant-desktopapplications-bin elephant-calc-bin \
     elephant-runner-bin elephant-files-bin
 
@@ -173,13 +173,9 @@ sudo systemctl enable --now NetworkManager.service
 # ---------------------------------------------------------------------------
 # 3b. Docker
 # ---------------------------------------------------------------------------
-if ! command -v docker >/dev/null 2>&1; then
-    say "==> Instalando Docker..." "==> Installing Docker..."
-    sudo pacman -S --needed --noconfirm docker docker-compose
-    sudo systemctl enable --now docker.service
-else
-    say "==> Docker ya está instalado ($(docker --version))." "==> Docker is already installed ($(docker --version))."
-fi
+say "==> Instalando Docker..." "==> Installing Docker..."
+sudo pacman -S --needed --noconfirm docker docker-compose docker-buildx
+sudo systemctl enable --now docker.service
 
 if ! groups "$USER" | grep -q '\bdocker\b'; then
     say "==> Agregando $USER al grupo docker..." "==> Adding $USER to the docker group..."
