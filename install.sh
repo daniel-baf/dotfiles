@@ -641,6 +641,18 @@ fi
 
 say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
 install_pacman opencode
+if ! command -v playwright >/dev/null 2>&1; then
+    ensure_nvm_node
+    if npm install -g playwright; then
+        playwright install chromium || \
+            say "==> Playwright CLI instalado, pero falló la descarga del browser Chromium. Corré 'playwright install chromium' a mano." \
+                "==> Playwright CLI installed, but downloading the Chromium browser failed. Run 'playwright install chromium' by hand."
+    else
+        say "==> No se pudo instalar Playwright CLI vía npm." "==> Could not install Playwright CLI via npm."
+    fi
+else
+    say "==> Playwright CLI ya está instalado." "==> Playwright CLI is already installed."
+fi
 if ! command -v codex >/dev/null 2>&1; then
     ensure_nvm_node
     if ! npm install -g @openai/codex; then
