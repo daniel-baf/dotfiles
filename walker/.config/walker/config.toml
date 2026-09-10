@@ -8,3 +8,7 @@
 
 close_when_open = true
 terminal = "kitty"
+
+# Tema tokyo-night a juego con waybar/swaync/hyprlock: vive en
+# themes/tokyo-night/style.css (hereda el CSS default de walker).
+theme = "tokyo-night"

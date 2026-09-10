@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
@@ -144,9 +144,19 @@ fi
 # 3. Paquetes
 # ---------------------------------------------------------------------------
 say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages from the official repos..."
+# fzf: Ctrl+R difuso y amigos (se activa desde bash/.bashrc).
+# bash-completion: tab para git/systemd/pacman (lo carga /etc/bash.bashrc).
+# xdg-desktop-portal-hyprland + -gtk: compartir pantalla en calls (Discord/
+#   Meet/OBS) y diálogos de archivos nativos -- sin esto no funcionan.
+# polkit-kde-agent: diálogo de contraseña para apps GUI que elevan permisos
+#   (se lanza desde hyprland.lua en el autostart).
+# btop: monitor de recursos (SUPER+B) / trash-cli: papelera para ranger (tecla D).
+# cliphist + wl-clipboard: historial del portapapeles estilo Klipper (se
+#   consulta desde walker, provider elephant-clipboard; persiste entre reinicios).
 sudo pacman -S --needed --noconfirm \
     stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd less \
-    bash-completion \
+    bash-completion fzf btop trash-cli cliphist wl-clipboard \
+    xdg-desktop-portal-hyprland xdg-desktop-portal-gtk polkit-kde-agent \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
     networkmanager network-manager-applet sddm \
@@ -156,12 +166,14 @@ say "==> Instalando paquetes de AUR (walker, wlogout, elephant, nwg-displays, pw
     "==> Installing AUR packages (walker, wlogout, elephant, nwg-displays, pwvucontrol)..."
 # walker (SUPER+R) necesita el backend "elephant" corriendo aparte para poder
 # buscar algo -- sin él, walker abre y falla en silencio. Se instalan solo los
-# providers que usamos (apps/calc/runner/files), no "elephant-all-bin" (ese
-# arrastra 1Password/Bitwarden/apt/dnf/rpm/niri, nada de lo que usamos aquí).
+# providers que usamos (apps/calc/runner/files/clipboard), no "elephant-all-bin"
+# (ese arrastra 1Password/Bitwarden/apt/dnf/rpm/niri, nada de lo que usamos aquí).
+# elephant-clipboard: historial del portapapeles en walker (backend cliphist,
+# que se instala desde los repos oficiales más arriba).
 # nwg-displays: GUI para acomodar/duplicar/extender pantallas (SUPER+P).
 paru -S --needed --noconfirm walker wlogout nwg-displays pwvucontrol \
     elephant-bin elephant-desktopapplications-bin elephant-calc-bin \
-    elephant-runner-bin elephant-files-bin
+    elephant-runner-bin elephant-files-bin elephant-clipboard-bin
 
 # ---------------------------------------------------------------------------
 # 3a. NetworkManager (obligatorio: sin esto no hay forma de conectarse a
@@ -566,64 +578,76 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 9. Apps opcionales
+# 9. Apps opcionales -- sin preguntas: si falta se instala, si ya está se
+#    salta. La idea es poder correr install.sh las veces que sea sin
+#    babysittearlo (idempotente de punta a punta).
 # ---------------------------------------------------------------------------
-echo ""
-say "==> Apps opcionales" "==> Optional apps"
+say "==> Apps opcionales (se instalan las que falten)..." \
+    "==> Optional apps (missing ones get installed)..."
+
+# pacman y paru comparten la base de datos local -> sirve para ambos.
+have_pkg() {
+    pacman -Q "$1" >/dev/null 2>&1
+}
+
+# install_pacman <pkg> / install_aur <pkg> -- nunca abortan el script.
+install_pacman() {
+    if have_pkg "$1"; then
+        say "==> $1 ya está instalado." "==> $1 is already installed."
+        return 0
+    fi
+    if ! sudo pacman -S --needed --noconfirm "$1"; then
+        say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: sudo pacman -S $1" \
+            "==> Could not install '$1'. Install it manually whenever you want: sudo pacman -S $1"
+    fi
+}
 
 install_aur() {
-    # install_aur <pkg> -- nunca aborta el script si falla (apps opcionales).
+    if have_pkg "$1"; then
+        say "==> $1 ya está instalado." "==> $1 is already installed."
+        return 0
+    fi
     if ! paru -S --needed --noconfirm "$1"; then
         say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: paru -S $1" \
             "==> Could not install '$1'. Install it manually whenever you want: paru -S $1"
     fi
 }
 
-say "-- Navegador --" "-- Browser --"
-if ask_yn "¿Instalar Google Chrome? [s/N]: " "Install Google Chrome? [y/N]: "; then
-    install_aur google-chrome
-fi
-
-say "-- Música --" "-- Music --"
-if ask_yn "¿Instalar Spotify? [s/N]: " "Install Spotify? [y/N]: "; then
+say "-- Navegador y música --" "-- Browser and music --"
+install_aur google-chrome
+if ! have_pkg spotify-launcher; then
     install_aur spotify-launcher
     say "    (Primera vez: corré 'spotify-launcher' para que baje el cliente oficial.)" \
         "    (First run: run 'spotify-launcher' so it downloads the official client.)"
 fi
 
 say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
-if ask_yn "¿Instalar OpenCode? [s/N]: " "Install OpenCode? [y/N]: "; then
-    sudo pacman -S --needed --noconfirm opencode
-fi
-if ask_yn "¿Instalar Codex CLI (OpenAI)? [s/N]: " "Install Codex CLI (OpenAI)? [y/N]: "; then
+install_pacman opencode
+if ! command -v codex >/dev/null 2>&1; then
     ensure_nvm_node
     if ! npm install -g @openai/codex; then
         say "==> No se pudo instalar Codex CLI vía npm." "==> Could not install Codex CLI via npm."
     fi
+else
+    say "==> Codex CLI ya está instalado." "==> Codex CLI is already installed."
 fi
-if ask_yn "¿Instalar la CLI de Antigravity (Google)? [s/N]: " "Install the Antigravity CLI (Google)? [y/N]: "; then
+if have_pkg antigravity-bin; then
+    say "==> antigravity-bin ya está instalado." "==> antigravity-bin is already installed."
+elif paru -Si antigravity-bin >/dev/null 2>&1; then
     # Nombre de paquete AUR sin confirmar al 100% (herramienta muy nueva) --
     # se verifica antes de intentar instalar para no cortar el script.
-    if paru -Si antigravity-bin >/dev/null 2>&1; then
-        install_aur antigravity-bin
-    else
-        say "==> No encontré 'antigravity-bin' en AUR. Instalala a mano: https://antigravity.google/" \
-            "==> Could not find 'antigravity-bin' in AUR. Install it manually: https://antigravity.google/"
-    fi
+    install_aur antigravity-bin
+else
+    say "==> No encontré 'antigravity-bin' en AUR. Instalala a mano: https://antigravity.google/" \
+        "==> Could not find 'antigravity-bin' in AUR. Install it manually: https://antigravity.google/"
 fi
 
 say "-- IDEs / editores --" "-- IDEs / editors --"
-if ask_yn "¿Instalar Cursor (IDE con IA)? [s/N]: " "Install Cursor (AI IDE)? [y/N]: "; then
-    install_aur cursor-bin
-fi
-if ask_yn "¿Instalar Visual Studio Code? [s/N]: " "Install Visual Studio Code? [y/N]: "; then
-    install_aur visual-studio-code-bin
-fi
-if ask_yn "¿Instalar DataGrip (JetBrains)? [s/N]: " "Install DataGrip (JetBrains)? [y/N]: "; then
-    # datagrip solo no abre -- hace falta también datagrip-jre (el runtime).
-    install_aur datagrip
-    install_aur datagrip-jre
-fi
+install_aur cursor-bin
+install_aur visual-studio-code-bin
+# datagrip solo no abre -- hace falta también datagrip-jre (el runtime).
+install_aur datagrip
+install_aur datagrip-jre
 
 echo ""
 echo "=============================================================="

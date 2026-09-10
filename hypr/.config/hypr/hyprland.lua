@@ -89,6 +89,19 @@ hl.on("hyprland.start", function()
     -- ícono de red en la bandeja (tray de waybar) para conectarse a redes WiFi nuevas
     hl.exec_cmd("pkill nm-applet; nm-applet --indicator")
 end)
+hl.on("hyprland.start", function()
+    -- Agente de polkit: el diálogo de contraseña cuando una app GUI necesita
+    -- permisos (montar discos, gparted, ...). En Hyprland no lo lanza nadie
+    -- solo -- sin esto, esas apps fallan en silencio.
+    hl.exec_cmd("pkill -f polkit-kde-authentication-agent-1; /usr/lib/polkit-kde-authentication-agent-1")
+end)
+hl.on("hyprland.start", function()
+    -- Historial del portapapeles (como Klipper en KDE): todo lo copiado se
+    -- guarda con cliphist (persiste entre reinicios hasta borrarlo) y se
+    -- recupera desde walker (provider elephant-clipboard). "wl-paste --watch"
+    -- escucha cada copiado y lo manda al store.
+    hl.exec_cmd("pkill -f 'wl-paste --watch'; wl-paste --watch cliphist store")
+end)
 
 -----------------------
 ---- LOOK AND FEEL ----
@@ -184,6 +197,7 @@ hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd(terminal .. " " .. fileManage
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
+hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(terminal .. " btop"))
 
 -- Focus
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "l" }))

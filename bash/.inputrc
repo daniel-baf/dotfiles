@@ -1,0 +1,13 @@
+# ~/.inputrc — gestionado desde ~/dotfiles (Stow)
+# Configura readline: lo que bash usa para tab, flechas y Ctrl+R.
+
+# Tab ignora mayúsculas/minúsculas (README.md == readme.md)
+set completion-ignore-case on
+
+# Tab muestra todas las opciones al primer golpe (sin doble tab)
+set show-all-if-ambiguous on
+
+# Escribí un prefijo y las flechas ↑/↓ solo recorren los comandos que
+# empezaron así (p.ej. "git " + ↑ recorre tu historial de git nada más)
+"\e[A": history-search-backward
+"\e[B": history-search-forward
