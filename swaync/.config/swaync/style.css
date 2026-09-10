@@ -1,5 +1,9 @@
 /* ~/.config/swaync/style.css — Tokyo Night, gestionado desde ~/dotfiles (Stow) */
 
+/* current.css es un symlink a ../theme/{dark,light}.css, mantenido por
+   ~/.config/hypr/scripts/apply-theme.sh. */
+@import url("../theme/current.css");
+
 * {
     font-family: "CaskaydiaCove Nerd Font";
     font-size: 13px;
@@ -10,47 +14,47 @@
    de Adwaita en estados vacíos) y se ven como bloques de color sueltos. */
 window, box, list, scrolledwindow, viewport {
     background: transparent;
-    color: #c0caf5;
+    color: @theme_fg_color;
 }
 
 .control-center {
-    background: rgba(26, 27, 38, 0.95);
-    border: 1px solid #292e42;
+    background: @window_bg_color;
+    border: 1px solid @border_color;
     border-radius: 14px;
-    color: #c0caf5;
+    color: @theme_fg_color;
 }
 
 .widget-title {
-    color: #bb9af7;
+    color: @accent2_color;
     font-weight: bold;
     font-size: 16px;
     padding: 12px 14px;
-    border-bottom: 1px solid rgba(41, 46, 66, 0.8);
+    border-bottom: 1px solid alpha(@border_color, 0.8);
 }
 
 .widget-title > button {
-    background: rgba(122, 162, 247, 0.15);
-    color: #7aa2f7;
+    background: alpha(@accent_bg_color, 0.15);
+    color: @accent_bg_color;
     border-radius: 8px;
     padding: 4px 10px;
 }
 
 .widget-title > button:hover {
-    background: rgba(122, 162, 247, 0.3);
+    background: alpha(@accent_bg_color, 0.3);
 }
 
 .widget-dnd {
     padding: 10px 14px;
-    border-bottom: 1px solid rgba(41, 46, 66, 0.8);
+    border-bottom: 1px solid alpha(@border_color, 0.8);
 }
 
 .widget-dnd > switch {
     border-radius: 12px;
-    background: rgba(41, 46, 66, 0.8);
+    background: alpha(@border_color, 0.8);
 }
 
 .widget-dnd > switch:checked {
-    background: #7aa2f7;
+    background: @accent_bg_color;
 }
 
 .widget-dnd > switch slider {
@@ -61,7 +65,7 @@ window, box, list, scrolledwindow, viewport {
    y "tapar" el resto del panel con bloques de color. blur queda apagado en
    config.json por el mismo motivo. */
 .widget-mpris {
-    background: rgba(41, 46, 66, 0.6);
+    background: alpha(@border_color, 0.6);
     border-radius: 12px;
     margin: 8px 10px;
     padding: 8px;
@@ -80,13 +84,13 @@ window, box, list, scrolledwindow, viewport {
 }
 
 .widget-mpris button {
-    background: rgba(122, 162, 247, 0.15);
-    color: #7aa2f7;
+    background: alpha(@accent_bg_color, 0.15);
+    color: @accent_bg_color;
     border-radius: 8px;
 }
 
 .widget-mpris button:hover {
-    background: rgba(122, 162, 247, 0.3);
+    background: alpha(@accent_bg_color, 0.3);
 }
 
 /* Lista de notificaciones */
@@ -96,10 +100,10 @@ window, box, list, scrolledwindow, viewport {
 }
 
 .notification {
-    background: rgba(26, 27, 38, 0.92);
-    border: 1px solid #292e42;
+    background: @window_bg_color;
+    border: 1px solid @border_color;
     border-radius: 12px;
-    color: #c0caf5;
+    color: @theme_fg_color;
     padding: 6px;
 }
 
@@ -109,31 +113,31 @@ window, box, list, scrolledwindow, viewport {
 
 .notification-default-action,
 .notification-action {
-    color: #c0caf5;
+    color: @theme_fg_color;
 }
 
 .close-button {
-    background: rgba(247, 118, 142, 0.2);
-    color: #f7768e;
+    background: alpha(@error_bg_color, 0.2);
+    color: @error_bg_color;
     border-radius: 8px;
 }
 
 .close-button:hover {
-    background: rgba(247, 118, 142, 0.4);
+    background: alpha(@error_bg_color, 0.4);
 }
 
 /* Urgencia: acento sutil en el borde, no todo el fondo del bloque */
 .notification.critical {
-    border-color: #f7768e;
+    border-color: @error_bg_color;
 }
 
 .notification.low {
-    border-color: #414868;
+    border-color: @border_color_soft;
 }
 
 /* Estado "sin notificaciones" */
 .notification-placeholder,
 .control-center > .empty {
-    color: #545c7e;
+    color: @dim_color;
     padding: 30px 10px;
 }

@@ -8,28 +8,24 @@
  * AUTOCONTENIDO: walker 2.17 NO hereda el CSS default al usar un tema custom
  * (/etc/xdg/walker/themes/default/style.css) -- si falta una regla, pinta el
  * fondo el tema GTK claro (Adwaita, blanco). Por esto este archivo replica
- * TODA la estructura del default con la paleta tokyo-night explícita:
- * bg #1a1b26, texto #c0caf5, azul #7aa2f7, violeta #bb9af7, borde #414868.
- * (La misma paleta de waybar/style.css, swaync e hyprlock.)
+ * TODA la estructura del default, con los colores de
+ * ../../../theme/current.css (symlink a dark.css/light.css, mantenido por
+ * ~/.config/hypr/scripts/apply-theme.sh -- misma fuente que waybar/swaync/
+ * wlogout, así el toggle de tema también cambia el launcher).
  *
- * Fondo plano rgba(26,27,38,0.92) sobre fuente clara: legible. El alpha < 1
- * deja que el blur de Hyprland (decoration.blur) difumine el fondo, igual
- * que hace con swaync/kitty.
+ * Fondo plano con alpha < 1 sobre fuente clara: legible, y deja que el blur
+ * de Hyprland (decoration.blur) difumine el fondo, igual que con swaync/kitty.
  */
 
-@define-color window_bg_color rgba(26, 27, 38, 0.92);
-@define-color accent_bg_color #7aa2f7;
-@define-color theme_fg_color #c0caf5;
-@define-color error_bg_color #f7768e;
-@define-color error_fg_color #1a1b26;
+@import url("../../../theme/current.css");
 
 * {
   all: unset;
 }
 
 popover {
-  background: rgba(26, 27, 38, 0.95);
-  border: 1px solid #414868;
+  background: alpha(@window_bg_color, 0.95);
+  border: 1px solid @border_color_soft;
   border-radius: 14px;
   padding: 10px;
 }
@@ -46,7 +42,7 @@ scrollbar {
   opacity: 0;
 }
 
-/* La isla flotante: fondo plano oscuro (nada de degradados) */
+/* La isla flotante: fondo plano (nada de degradados) */
 .box-wrapper {
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
@@ -54,7 +50,7 @@ scrollbar {
   background: @window_bg_color;
   padding: 16px;
   border-radius: 14px;
-  border: 1px solid #414868;
+  border: 1px solid @border_color_soft;
 }
 
 .preview-box,
@@ -72,13 +68,13 @@ scrollbar {
 }
 
 .input selection {
-  background: rgba(122, 162, 247, 0.4);
+  background: alpha(@accent_bg_color, 0.4);
 }
 
-/* Campo de búsqueda: fondo #292e42 plano (como las filas de swaync) */
+/* Campo de búsqueda: fondo plano (como las filas de swaync) */
 .input {
   caret-color: @theme_fg_color;
-  background: #292e42;
+  background: @border_color;
   border: 1px solid transparent;
   border-radius: 8px;
   padding: 10px;
@@ -86,7 +82,7 @@ scrollbar {
 }
 
 .input:focus {
-  border-color: rgba(187, 154, 247, 0.6);
+  border-color: alpha(@accent2_color, 0.6);
 }
 
 .list {
@@ -99,21 +95,21 @@ scrollbar {
 }
 
 .item-quick-activation {
-  background: rgba(122, 162, 247, 0.25);
+  background: alpha(@accent_bg_color, 0.25);
   border-radius: 5px;
   padding: 10px;
 }
 
-/* Ítem seleccionado: azul translúcido, igual que waybar/swaync */
+/* Ítem seleccionado: acento translúcido, igual que waybar/swaync */
 child:selected .item-box,
 row:selected .item-box {
-  background: rgba(122, 162, 247, 0.25);
+  background: alpha(@accent_bg_color, 0.25);
 }
 
 .item-subtext {
   font-size: 12px;
   opacity: 0.7;
-  color: #a9b1d6;
+  color: @muted_fg_color;
 }
 
 .providerlist .item-subtext {
@@ -126,7 +122,7 @@ row:selected .item-box {
 }
 
 .preview {
-  border: 1px solid rgba(122, 162, 247, 0.25);
+  border: 1px solid alpha(@accent_bg_color, 0.25);
   border-radius: 8px;
   color: @theme_fg_color;
 }
@@ -161,7 +157,7 @@ row:selected .item-box {
 
 .keybinds {
   padding-top: 10px;
-  border-top: 1px solid #292e42;
+  border-top: 1px solid @border_color;
   font-size: 12px;
   color: @theme_fg_color;
 }
@@ -188,7 +184,7 @@ row:selected .item-box {
 .error {
   padding: 10px;
   background: @error_bg_color;
-  color: @error_fg_color;
+  color: @on_accent_color;
 }
 
 :not(.calc).current {

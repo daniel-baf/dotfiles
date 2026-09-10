@@ -114,6 +114,15 @@ hl.on("hyprland.start", function()
     -- solo -- sin esto, esas apps fallan en silencio.
     hl.exec_cmd("pkill -f polkit-kde-authentication-agent-1; /usr/lib/polkit-kde-authentication-agent-1")
 end)
+hl.on("hyprland.start", function()
+    -- Bordes/sombra oscuros o claros según gsettings color-scheme: no
+    -- persisten solos entre sesiones (se aplican con hyprctl keyword, no
+    -- viven en este archivo), así que hay que reaplicarlos al arrancar.
+    -- Reaplica también waybar/swaync/walker con la paleta correcta, así
+    -- después de un relogin no hace falta tocar el toggle a mano si ya
+    -- estaba en modo claro. Ver ~/dotfiles/hypr/.config/hypr/scripts/.
+    hl.exec_cmd("sleep 1; ~/.config/hypr/scripts/apply-theme.sh")
+end)
 
 -----------------------
 ---- LOOK AND FEEL ----

@@ -1,2 +1,7 @@
 .DS_Store
 *.swp
+
+# Symlinks de estado del toggle de tema (oscuro/claro), generados en runtime
+# por ~/.config/hypr/scripts/apply-theme.sh -- no son parte del repo.
+theme/.config/theme/current.css
+kitty/.config/kitty/theme/current.conf

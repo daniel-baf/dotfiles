@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman chrome spotify"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman chrome spotify theme"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
@@ -430,6 +430,18 @@ fi
 say "==> Aplicando symlinks con Stow ($STOW_PACKAGES)..." "==> Applying symlinks with Stow ($STOW_PACKAGES)..."
 cd "$DOTFILES_DIR"
 stow -v -t "$HOME" $STOW_PACKAGES
+
+# ---------------------------------------------------------------------------
+# 6a. Generar ~/.config/theme/current.css + gtk-{3,4}.0/settings.ini según el
+#     modo oscuro/claro recién puesto por gsettings (paso 4). Selector de
+#     tema real: botón en waybar (SUPER+click en el ícono de sol/luna),
+#     corre ~/.config/hypr/scripts/toggle-theme.sh.
+# ---------------------------------------------------------------------------
+if [ -x "$HOME/.config/hypr/scripts/apply-theme.sh" ]; then
+    say "==> Aplicando paleta de tema (waybar/swaync/kitty/walker + GTK settings.ini)..." \
+        "==> Applying theme palette (waybar/swaync/kitty/walker + GTK settings.ini)..."
+    "$HOME/.config/hypr/scripts/apply-theme.sh" || true
+fi
 
 # ---------------------------------------------------------------------------
 # 6b. Preview de markdown/imágenes/PDF/diagramas en ranger (glow, graphviz,

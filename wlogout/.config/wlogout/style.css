@@ -1,18 +1,23 @@
 /* ~/.config/wlogout/style.css — Tokyo Night, gestionado desde ~/dotfiles (Stow) */
 
+/* current.css es un symlink a ../theme/{dark,light}.css, mantenido por
+   ~/.config/hypr/scripts/apply-theme.sh. wlogout se relanza fresco en cada
+   SUPER+M, así que no necesita reload en caliente. */
+@import url("../theme/current.css");
+
 * {
     background-image: none;
     font-family: "CaskaydiaCove Nerd Font";
 }
 
 window {
-    background: rgba(26, 27, 38, 0.55);
+    background: alpha(@window_bg_color, 0.55);
 }
 
 button {
-    color: #c0caf5;
-    background-color: rgba(41, 46, 66, 0.75);
-    border: 2px solid #292e42;
+    color: @theme_fg_color;
+    background-color: alpha(@border_color, 0.75);
+    border: 2px solid @border_color;
     border-radius: 16px;
     background-repeat: no-repeat;
     background-position: center;
@@ -22,8 +27,8 @@ button {
 }
 
 button:focus, button:active, button:hover {
-    background-color: rgba(122, 162, 247, 0.25);
-    border-color: #7aa2f7;
+    background-color: alpha(@accent_bg_color, 0.25);
+    border-color: @accent_bg_color;
 }
 
 #lock {

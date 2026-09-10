@@ -22,6 +22,7 @@
         "pulseaudio",
         "battery",
         "custom/notifications",
+        "custom/theme-toggle",
         "tray"
     ],
 
@@ -107,7 +108,7 @@
     "custom/notifications": {
         "exec": "swaync-client -swb",
         "return-type": "json",
-        "format": "{icon} {}",
+        "format": "{icon} {text}",
         "format-icons": {
             "notification": "",
             "none": "",
@@ -116,6 +117,14 @@
         },
         "on-click": "swaync-client -t -sw",
         "escape": true
+    },
+
+    "custom/theme-toggle": {
+        "exec": "~/.config/waybar/scripts/theme-status.sh",
+        "return-type": "json",
+        "interval": 2,
+        "on-click": "~/.config/hypr/scripts/toggle-theme.sh",
+        "tooltip": true
     },
 
     "tray": {

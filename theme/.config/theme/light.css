@@ -1,0 +1,17 @@
+/*
+ * ~/.config/theme/light.css — paleta Tokyo Night Day (clara), gestionado
+ * desde ~/dotfiles (Stow). Ver dark.css para la explicación del mecanismo.
+ */
+
+@define-color window_bg_color rgba(225, 226, 231, 0.92);
+@define-color theme_fg_color #3760bf;
+@define-color accent_bg_color #2e7de9;
+@define-color accent2_color #9854f1;
+@define-color border_color #c4c8da;
+@define-color border_color_soft #a1a6c5;
+@define-color error_bg_color #f52a65;
+@define-color success_color #587539;
+@define-color warning_color #8c6c3e;
+@define-color dim_color #8990b3;
+@define-color muted_fg_color #6172b0;
+@define-color on_accent_color #e1e2e7;
