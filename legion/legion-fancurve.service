@@ -1,0 +1,16 @@
+[Unit]
+Description=Curva de ventiladores custom para Legion (fans activos antes, sin esperar a los umbrales stock)
+Documentation=file:///home/debf/dotfiles/docs/legion/thermal.md
+After=multi-user.target
+# El módulo legion_laptop carga con los blacklists de modprobe.d; si por
+# alguna razón no está (kernel nuevo sin DKMS), el servicio se salta en
+# silencio en vez de fallar el boot.
+ConditionPathExists=/sys/module/legion_laptop
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/legion-fancurve.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

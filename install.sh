@@ -368,6 +368,30 @@ say "==> Habilitando Bluetooth..." "==> Enabling Bluetooth..."
 sudo systemctl enable --now bluetooth.service
 
 # ---------------------------------------------------------------------------
+# 3i. Térmica de la Legion (opcional) -- solo si el equipo es la Legion Pro 5
+#     16ARX8 (detectado por DMI). Instala TLP, el driver de fans
+#     LenovoLegionLinux (DKMS por AUR), la curva de ventiladores custom con
+#     su servicio de persistencia, y el APST del NVMe en el cmdline de
+#     Limine. Diagnóstico completo y cómo revertir: docs/legion/thermal.md.
+#     Requiere un reinicio al final para activar todo.
+# ---------------------------------------------------------------------------
+if grep -qs 'Legion Pro 5 16ARX8' \
+        /sys/class/dmi/id/product_name \
+        /sys/class/dmi/id/product_family \
+        /sys/class/dmi/id/product_version 2>/dev/null; then
+    if ask_yn "¿Configurar la térmica de la Legion (TLP + driver de fans + curva custom + APST del NVMe)? Necesita reinicio al final [s/N]: " \
+              "Configure the Legion thermal stack (TLP + fan driver + custom curve + NVMe APST)? Needs a reboot afterwards [y/N]: "; then
+        bash "$DOTFILES_DIR/legion/install-legion-thermal.sh"
+    else
+        say "==> Saltado. Podés correrlo cuando quieras: legion/install-legion-thermal.sh" \
+            "==> Skipped. You can run it whenever you want: legion/install-legion-thermal.sh"
+    fi
+else
+    say "==> No es una Legion Pro 5 16ARX8: se omite la térmica custom." \
+        "==> Not a Legion Pro 5 16ARX8: skipping the custom thermal stack."
+fi
+
+# ---------------------------------------------------------------------------
 # 4. Tema oscuro por defecto + cursor (sin temas de terceros)
 # ---------------------------------------------------------------------------
 if command -v gsettings >/dev/null 2>&1; then

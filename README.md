@@ -15,6 +15,7 @@ Config de Hyprland (Legion Pro 7, solo NVIDIA) gestionada con [GNU Stow](https:/
 | `swaync`  | Notificaciones                                   |
 | `wlogout` | Menú de apagado/logout (`SUPER + M`)             |
 | `sddm`    | Tema de la pantalla de login (`tokyo-night`), no va con Stow: `install.sh` lo copia a `/usr/share/sddm/themes/` |
+| `legion`  | Térmica de la Legion Pro 5 16ARX8 (TLP + driver de fans + curva custom + APST del NVMe), no va con Stow: `install.sh` pregunta y corre `legion/install-legion-thermal.sh` — diagnóstico completo en `docs/legion/thermal.md` |
 | `claude`  | Skills de Claude Code (`~/.claude/skills/`), p.ej. `caveman` (modo de respuestas comprimido) |
 | `caveman` | El mismo modo "caveman", pero para Codex CLI (`~/.codex/AGENTS.md`), OpenCode (`~/.config/opencode/AGENTS.md`) y Antigravity CLI (`~/.gemini/GEMINI.md`) -- gateado para que solo se active si lo pedís en la conversación, ya que esas herramientas no tienen sistema de skills bajo demanda como Claude Code |
 
