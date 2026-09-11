@@ -106,6 +106,25 @@ Si molesta, la única palanca real es cap de PPT con `ryzenadj` (ver abajo).
 - El índice `hwmon5` puede cambiar entre boots; el script resuelve el path por
   nombre (`legion_hwmon`), no hardcodea el número.
 
+## Advertencias del firmware (aprendidas por las malas)
+
+- **NO usar `max-power` (platform_profile extreme)**: en BIOS LPCN65WW el EC
+  **corta la energía instantáneamente** al recibir el modo (apagón duro, sin
+  shutdown; journal corta seco en el mismo segundo del echo). Los perfiles
+  seguros son `quiet`/`balanced`/`performance`/`custom`.
+- Un corte de energía duro puede **resetear el modo de carga del EC**: de
+  `Long_Life` (tope 80%) vuelve a `Fast` (carga rápida a 100%, ~88 W = calor
+  bajo el trackpad de nuevo). Verificar y restaurar con:
+  ```bash
+  cat /sys/class/power_supply/BAT0/charge_types
+  echo Long_Life | sudo tee /sys/class/power_supply/BAT0/charge_types
+  ```
+- El techo de ventiladores en `balanced` es ~3700 RPM: a plena carga el EC no
+  pasa de ahí aunque la curva pida 70-80% (cap de firmware por power mode;
+  en otros modelos LLL lo destraba con `fan_unlock`, no habilitado para LPCN).
+  Consecuencia: los picos de boost (~97-100 °C) solo bajan capando PPT
+  (ryzenadj).
+
 ## Cómo revertir todo
 
 ```bash
