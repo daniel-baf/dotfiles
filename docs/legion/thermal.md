@@ -29,8 +29,12 @@ desaparece.
 Todo lo aplica `legion/install-legion-thermal.sh` (idempotente), que corre
 opcionalmente desde `install.sh` si detecta la 16ARX8 por DMI:
 
-1. **TLP** (repo oficial): `CPU_ENERGY_PERF_POLICY_ON_AC=balance_performance`,
+1. **TLP** (repo oficial): `CPU_ENERGY_PERF_POLICY_ON_AC=balance_power`,
    `CPU_ENERGY_PERF_POLICY_ON_BAT=power`, `CPU_BOOST_ON_BAT=0`.
+   Nota amd-pstate-epp: los valores válidos son los de
+   `energy_performance_available_preferences`
+   (`default performance balance_performance balance_power power custom`);
+   `balance` a secas es de Intel/EPB y da `Invalid argument`.
 2. **LenovoLegionLinux** (AUR: `lenovolegionlinux-dkms-git` +
    `lenovolegionlinux-git`): módulo `legion_laptop` que habla con el EC.
    Da telemetría real (`legion_hwmon`: RPM de ambos fans + temps CPU/GPU/IC) y
@@ -39,8 +43,8 @@ opcionalmente desde `install.sh` si detecta la 16ARX8 por DMI:
    (`/etc/modprobe.d/blacklist-lenovo-mainline.conf`).
 4. **Curva custom** (`/usr/local/sbin/legion-fancurve.sh` + servicio
    `legion-fancurve.service`): curva "fría" con speeds pwm
-   `0 51 62 77 92 113 133 159 184 210`
-   (≈ 0/20/24/30/36/44/52/62/72/82 % de ~10000 RPM). Como los umbrales de
+   `0 51 62 86 96 113 133 159 184 210`
+   (≈ 0/20/24/34/38/44/52/62/72/82 % de ~10000 RPM). Como los umbrales de
    temperatura no son escribibles en esta EC, la estrategia es subir el
    airflow de cada punto del escalón stock: idle queda en ~57-60 °C con
    2400-3000 RPM y bajo carga los fans escalan fuerte antes de los 90 °C.
@@ -94,6 +98,25 @@ recupera 61 °C a los 40 s de cortar la carga. El **pico inicial de 97-100 °C
 en los primeros segundos es inercial** (boost del 7745HX: descarga calor más
 rápido de lo que cualquier fan físico responde) y se estabiliza con throttle.
 Si molesta, la única palanca real es cap de PPT con `ryzenadj` (ver abajo).
+
+## Uso en las piernas (calor del chasis por abajo)
+
+Con cargador puesto, las fuentes de calor que se sienten abajo son, en orden:
+la **carga rápida de la batería** (~52 W bajo el trackpad hasta llegar al
+tope), el **CPU** con EPP `balance_performance` manteniendo boost alto en uso
+liviano, y la **dGPU despierta** (~11 W, P4, por Hyprland/electron — mientras
+el escritorio renderice en la NVIDIA no baja de ahí).
+
+Mitigaciones aplicadas:
+- EPP `balance_power` en AC (TLP) — boost menos ansioso en uso liviano.
+- Curva con más airflow en la zona 60-70 °C (p4/p5).
+- `legion_cli batteryconservation-enable`: el EC lo acepta (`status: true`)
+  pero en este firmware NO corta una carga en curso — la carga corta sola
+  al llegar al tope (80% con Long_Life). Si molesta el calor y está cargando,
+  esperar a que llegue al tope o desenchufar un rato.
+- El fondo de apps (electron ×2 + spotify + uvicorn ≈ 80% de un core) sostiene
+  ~60-67 °C en idle: cerrar Spotify/electron en modo "piernas" baja un par de
+  grados más.
 
 ## Mantenimiento
 

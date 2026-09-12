@@ -11,7 +11,7 @@
 # para que el escalado sea más progressivo que el stock.
 #
 # Valores en escala pwm 0-255. El EC los guarda como porcentaje de ~10000 RPM
-# (pwm*100/255). Curva "fría" en %: 0, 20, 24, 30, 36, 44, 52, 62, 72, 82
+# (pwm*100/255). Curva "fría" en %: 0, 20, 24, 34, 38, 44, 52, 62, 72, 82
 # (los umbrales de temperatura son los de fábrica del EC, ~50 a ~90 °C): al
 # no poder bajarse los umbrales (firmware), se sube el airflow de cada punto
 # del escalón stock -> la temperatura de equilibrio baja (idle ~57-60 °C con
@@ -36,7 +36,7 @@ H="$(for d in /sys/devices/platform/legion/hwmon/hwmon*; do
     done
     exit 1)" || { echo "legion-fancurve: no encontré legion_hwmon (¿está cargado legion_laptop?)" >&2; exit 1; }
 
-set -- 0 51 62 77 92 113 133 159 184 210
+set -- 0 51 62 86 96 113 133 159 184 210
 for i in 1 2 3 4 5 6 7 8 9 10; do
     printf '%s\n' "$1" > "$H/pwm1_auto_point${i}_pwm"
     shift

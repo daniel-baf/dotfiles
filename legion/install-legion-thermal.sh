@@ -44,8 +44,8 @@ set_tlp_kv() {
     fi
 }
 
-step "Configurando TLP (EPP balance_performance en AC / power en batería, boost off en batería)..."
-set_tlp_kv CPU_ENERGY_PERF_POLICY_ON_AC balance_performance
+step "Configurando TLP (EPP balance_power en AC / power en batería, boost off en batería)..."
+set_tlp_kv CPU_ENERGY_PERF_POLICY_ON_AC balance_power
 set_tlp_kv CPU_ENERGY_PERF_POLICY_ON_BAT power
 set_tlp_kv CPU_BOOST_ON_BAT 0
 sudo systemctl enable --now tlp
