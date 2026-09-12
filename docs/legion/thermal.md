@@ -110,10 +110,10 @@ el escritorio renderice en la NVIDIA no baja de ahí).
 Mitigaciones aplicadas:
 - EPP `balance_power` en AC (TLP) — boost menos ansioso en uso liviano.
 - Curva con más airflow en la zona 60-70 °C (p4/p5).
-- `legion_cli batteryconservation-enable`: el EC lo acepta (`status: true`)
-  pero en este firmware NO corta una carga en curso — la carga corta sola
-  al llegar al tope (80% con Long_Life). Si molesta el calor y está cargando,
-  esperar a que llegue al tope o desenchufar un rato.
+- `legion_cli batteryconservation-enable`: congela la carga donde esté
+  (tarda ~2 min en aplicar; luego oscila Charging/Discharging alrededor del
+  nivel — normal en Lenovo). Con `disable` vuelve a cargar. Alternativa sin
+  conservation: dejar que la carga llegue al tope (80% con Long_Life).
 - El fondo de apps (electron ×2 + spotify + uvicorn ≈ 80% de un core) sostiene
   ~60-67 °C en idle: cerrar Spotify/electron en modo "piernas" baja un par de
   grados más.
