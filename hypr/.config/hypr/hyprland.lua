@@ -27,11 +27,20 @@ hl.env("QT_QPA_PLATFORMTHEME", "gtk2")
 ---- MONITOR -----
 ------------------
 
--- eDP-1, panel único del Legion (dato real: hyprctl monitors).
--- scale = 1.25, no 1.2: 2560x1600 / 1.2 = 2133.33x1333.33 (no da píxeles
--- lógicos enteros) -> Hyprland lo rechaza y aplica 1.25 (2048x1280, entero)
--- solo, avisando en cada arranque. 1.25 evita ese aviso.
-hl.monitor({ output = "eDP-1", mode = "2560x1600@165", position = "0x0", scale = 1.25 })
+-- El layout de monitores NO se define acá: lo escribe nwg-displays (SUPER+P)
+-- en ~/.config/hypr/monitors.lua (archivo local de cada máquina, fuera del
+-- repo) y este require lo carga. Al pulsar Apply, nwg-displays reescribe ese
+-- archivo y Hyprland lo recarga solo. Sin el require, Apply escribe un
+-- archivo que nadie lee y no pasa nada (ni posiciones ni mirror).
+-- Fallback genérico (clon fresco sin monitors.lua todavía): todas las
+-- salidas con su modo preferido. El primer Apply de nwg-displays genera el
+-- archivo real de la máquina.
+-- Nota del panel del Legion (eDP-1, 2560x1600): en la GUI usar scale 1.25,
+-- no 1.2 -- 2560/1.2 = 2133.33 px lógicos (no enteros) -> Hyprland lo
+-- rechaza y aplica 1.25 (2048x1280, entero) solo, avisando en cada arranque.
+if not pcall(require, "monitors") then
+    hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+end
 
 ---------------------
 ---- MY PROGRAMS ----
