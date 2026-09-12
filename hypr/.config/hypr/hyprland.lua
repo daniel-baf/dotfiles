@@ -23,6 +23,15 @@ hl.env("HYPRCURSOR_SIZE", "24")
 -- Qt siguiendo el theme oscuro del sistema (sin Kvantum, sin GTK_THEME forzado)
 hl.env("QT_QPA_PLATFORMTHEME", "gtk2")
 
+-- Apps Electron (VSCode, Cursor, ...) en Wayland nativo, global: sin esto
+-- corren por XWayland, que no soporta el scale 1.25 fraccional del eDP y se
+-- ven borrosas (renderizan a 1x y Hyprland estira el buffer). Es el mismo fix
+-- que chrome-flags.conf / spotify-launcher.conf, pero de una sola línea para
+-- todo Electron (la variable es oficial desde Electron 28; "auto" cae a X11
+-- si no hay Wayland). Las apps Chromium/CEF puras NO leen esta variable y
+-- siguen necesitando su archivo de flags aparte.
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+
 ------------------
 ---- MONITOR -----
 ------------------
