@@ -32,6 +32,22 @@ hl.env("QT_QPA_PLATFORMTHEME", "gtk2")
 -- siguen necesitando su archivo de flags aparte.
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 
+-- Steam (y cualquier app sin soporte Wayland) corre por XWayland, que no
+-- entiende el scale 1.25 fraccional del eDP: Hyprland reescala su buffer
+-- por software y sale borroso. force_zero_scaling hace que XWayland les
+-- diga a esas apps que la pantalla es 1x (nítido, sin reescalado), a costa
+-- de que se vean físicamente chicas si la app no compensa por su cuenta --
+-- por eso Steam se lanza con STEAM_FORCE_DESKTOPUI_SCALING=1.25 (ver
+-- bash/.bashrc y steam/.local/share/applications/steam.desktop) para que
+-- compense el tamaño. Probado en vivo con hyprctl eval antes de fijarlo acá:
+-- ni STEAM_FORCE_DESKTOPUI_SCALING solo ni xwayland.use_nearest_neighbor
+-- solo arreglaban el blur, hacía falta esta combinación.
+hl.config({
+    xwayland = {
+        force_zero_scaling = true,
+    },
+})
+
 ------------------
 ---- MONITOR -----
 ------------------

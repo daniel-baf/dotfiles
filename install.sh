@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman chrome spotify theme electron"
+STOW_PACKAGES="git kitty hypr ranger waybar walker swaync wlogout elephant bash claude caveman chrome spotify steam theme electron"
 BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 # ---------------------------------------------------------------------------
@@ -675,6 +675,55 @@ if ! have_pkg spotify-launcher; then
         "    (First run: run 'spotify-launcher' so it downloads the official client.)"
 fi
 
+say "-- Gaming --" "-- Gaming --"
+# Steam se pregunta aparte (a diferencia del resto de esta sección, que se
+# instala solo si falta): habilitar [multilib] toca /etc/pacman.conf, un
+# archivo de sistema, así que no queremos hacerlo sin confirmación. Si dicen
+# que sí, lo básico (multilib + steam) es obligatorio; gamemode, MangoHud y
+# ProtonUp-Qt son mejoras de rendimiento/compatibilidad y se preguntan cada
+# una por separado.
+echo ""
+if have_pkg steam; then
+    say "==> steam ya está instalado." "==> steam is already installed."
+else
+    if ask_yn "¿Instalar Steam? [s/N]: " "Install Steam? [y/N]: "; then
+        if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
+            say "==> Habilitando el repo [multilib] (necesario para Steam, paquetes de 32 bits)..." \
+                "==> Enabling the [multilib] repo (needed for Steam, 32-bit packages)..."
+            sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
+            sudo pacman -Sy
+        fi
+        install_pacman steam
+        say "    (El fix para el blur de Steam con el scale 1.25 -- xwayland.force_zero_scaling en hyprland.lua + STEAM_FORCE_DESKTOPUI_SCALING en el .desktop/alias de bash -- ya está en el repo, vía Stow.)" \
+            "    (The fix for Steam's blur with the 1.25 scale -- xwayland.force_zero_scaling in hyprland.lua + STEAM_FORCE_DESKTOPUI_SCALING in the .desktop/bash alias -- is already in the repo, via Stow.)"
+    else
+        say "==> Saltado: Steam no instalado." "==> Skipped: Steam not installed."
+    fi
+fi
+
+if have_pkg steam; then
+    if ask_yn "  ¿Instalar gamemode (optimiza CPU/GPU mientras jugás)? [s/N]: " \
+              "  Install gamemode (optimizes CPU/GPU while gaming)? [y/N]: "; then
+        install_pacman gamemode
+        install_pacman lib32-gamemode
+        say "    (Por juego: opciones de lanzamiento -> 'gamemoderun %command%')" \
+            "    (Per game: launch options -> 'gamemoderun %command%')"
+    fi
+
+    if ask_yn "  ¿Instalar MangoHud (overlay de FPS/temperaturas en los juegos)? [s/N]: " \
+              "  Install MangoHud (FPS/temperature overlay in games)? [y/N]: "; then
+        install_pacman mangohud
+        install_pacman lib32-mangohud
+        say "    (Por juego: opciones de lanzamiento -> 'mangohud %command%')" \
+            "    (Per game: launch options -> 'mangohud %command%')"
+    fi
+
+    if ask_yn "  ¿Instalar ProtonUp-Qt (GUI para versiones de Proton-GE)? [s/N]: " \
+              "  Install ProtonUp-Qt (GUI for Proton-GE versions)? [y/N]: "; then
+        install_aur protonup-qt
+    fi
+fi
+
 say "-- Herramientas de IA (CLI) --" "-- AI tools (CLI) --"
 install_pacman opencode
 if ! command -v playwright >/dev/null 2>&1; then
@@ -716,6 +765,9 @@ if ! command -v agy >/dev/null 2>&1; then
 else
     say "==> La CLI de Antigravity (agy) ya está instalada." "==> The Antigravity CLI (agy) is already installed."
 fi
+
+say "-- Infraestructura / IaC --" "-- Infrastructure / IaC --"
+install_pacman terraform
 
 say "-- IDEs / editores --" "-- IDEs / editors --"
 install_aur cursor-bin

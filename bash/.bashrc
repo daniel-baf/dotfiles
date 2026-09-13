@@ -17,6 +17,15 @@ PS1='[\u@\h \W]\$ '
 alias ll='ls -lah'
 alias gs='git status'
 
+# Steam corre por XWayland (sin soporte nativo de Wayland) y con el scale
+# 1.25 del panel se ve chico o borroso según cómo se lance -- el fix real es
+# xwayland.force_zero_scaling en hyprland.lua (nítido, pero XWayland queda
+# "ciego" al escalado), y esta variable hace que la UI propia de Steam (no
+# los juegos) compense con su propio 1.25 para no verse chica. Mismo fix
+# aplicado al .desktop (steam/.local/share/applications/steam.desktop) para
+# cuando se abre desde walker.
+alias steam='STEAM_FORCE_DESKTOPUI_SCALING=1.25 steam'
+
 # -------------------------
 # -- Entorno --
 # -------------------------
