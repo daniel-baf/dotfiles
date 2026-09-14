@@ -131,10 +131,19 @@ Mitigaciones aplicadas:
 
 ## Advertencias del firmware (aprendidas por las malas)
 
+- **Resuelto upstream, verificado 2026-09-13**: [PR #563](https://github.com/johnfanv2/LenovoLegionLinux/pull/563)
+  (mergeado 2026-09-14) le puso `has_extreme_powermode = false` a
+  `model_lpcn`. Tras actualizar `lenovolegionlinux-git` +
+  `lenovolegionlinux-dkms-git` (`paru -S lenovolegionlinux-git
+  lenovolegionlinux-dkms-git`) y recargar el módulo,
+  `cat /sys/firmware/acpi/platform_profile_choices` ya no lista `max-power`
+  (`low-power balanced performance custom`) — no se puede volver a pisar el
+  bug de abajo ni manualmente ni por auto-switch de legiond. Queda documentado
+  igual como contexto de por qué existía la restricción.
 - **NO usar `max-power` (platform_profile extreme)**: en BIOS LPCN65WW el EC
   **corta la energía instantáneamente** al recibir el modo (apagón duro, sin
   shutdown; journal corta seco en el mismo segundo del echo). Los perfiles
-  seguros son `quiet`/`balanced`/`performance`/`custom`.
+  seguros son `low-power`/`balanced`/`performance`/`custom`.
 - Un corte de energía duro puede **resetear el modo de carga del EC**: de
   `Long_Life` (tope 80%) vuelve a `Fast` (carga rápida a 100%, ~88 W = calor
   bajo el trackpad de nuevo). Verificar y restaurar con:
