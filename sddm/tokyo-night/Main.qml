@@ -1,9 +1,9 @@
 // ~/dotfiles/sddm/tokyo-night/Main.qml — gestionado desde ~/dotfiles
 // Tema de SDDM a juego con el resto del escritorio (Hyprland/Waybar/hyprlock/
-// wlogout, todos en paleta Tokyo Night). Ver ~/dotfiles/hypr/.config/hypr/
-// hyprlock.conf y ~/dotfiles/waybar/.config/waybar/style.css para los mismos
-// colores/estructura (isla flotante translúcida, reloj grande, acentos azul/
-// violeta).
+// wlogout, todos en paleta Tokyo Night). Calcado del look de la pantalla de
+// bloqueo (ver ~/dotfiles/hypr/.config/hypr/hyprlock.conf): sin tarjeta ni
+// barra superior, reloj grande flotante, fecha debajo, campos tipo "pill"
+// translúcidos con borde degradado azul/violeta, sin caja contenedora.
 
 import QtQuick 2.15
 import SddmComponents 2.0
@@ -19,8 +19,7 @@ Rectangle {
     // Paleta Tokyo Night (idéntica a hyprlock.conf / waybar/style.css)
     property color bg0: "#16161e"
     property color bg1: "#1a1b26"
-    property color panelBg: Qt.rgba(26 / 255, 27 / 255, 38 / 255, 0.85)
-    property color panelBorder: Qt.rgba(122 / 255, 162 / 255, 247 / 255, 0.3)
+    property color fieldFill: Qt.rgba(26 / 255, 27 / 255, 38 / 255, 0.6)
     property color buttonBg: Qt.rgba(41 / 255, 46 / 255, 66 / 255, 0.75)
     property color buttonBorder: "#292e42"
     property color blue: "#7aa2f7"
@@ -32,6 +31,13 @@ Rectangle {
     property color fg2: "#a9b1d6"
     property color comment: "#545c7e"
     property string uiFont: "CaskaydiaCove Nerd Font"
+
+    // Escala responsive: el tema fue diseñado sobre 2560x1440 (2K). SDDM
+    // redimensiona este Rectangle a la resolución real de cada pantalla, pero
+    // los tamaños de abajo son píxeles fijos -- sin este factor, en 1920x1080
+    // (u otra resolución menor) todo se ve desproporcionadamente grande.
+    readonly property real uiScale: Math.min(width / 2560, height / 1440)
+    function px(value) { return Math.round(value * uiScale) }
 
     property int sessionIndex: sessionCombo.index
 
@@ -71,190 +77,189 @@ Rectangle {
         }
     }
 
-    // Barra superior estilo Waybar (isla flotante translúcida)
-    Rectangle {
-        id: topBar
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 16
-        width: topRow.implicitWidth + 36
-        height: 36
-        radius: 14
-        color: root.panelBg
-        border.color: root.panelBorder
-        border.width: 1
-
-        Row {
-            id: topRow
-            anchors.centerIn: parent
-            spacing: 16
-
-            Text {
-                text: "❄ " + (sddm.hostName || "Arch Linux")
-                color: root.blue
-                font.family: root.uiFont
-                font.pixelSize: 13
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                color: root.fg2
-                font.family: root.uiFont
-                font.pixelSize: 13
-                anchors.verticalCenter: parent.verticalCenter
-                text: Qt.formatDate(clockModel.now, "dddd, d MMMM yyyy")
-            }
-        }
-    }
-
-    // Reloj + tarjeta de login, centrados (mismo layout que hyprlock.conf)
+    // Reloj + fecha + campos, centrados (mismo layout que hyprlock.conf: sin
+    // tarjeta, todo flotando sobre el fondo)
     Column {
         id: mainColumn
         anchors.centerIn: parent
-        spacing: 18
+        spacing: root.px(16)
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: Qt.formatTime(clockModel.now, "hh:mm")
             color: root.fg
             font.family: root.uiFont
-            font.pixelSize: 96
+            font.pixelSize: root.px(110)
             font.bold: true
         }
 
-        Rectangle {
-            id: card
+        Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 380
-            height: cardColumn.implicitHeight + 48
-            radius: 18
-            color: root.panelBg
-            border.color: root.panelBorder
-            border.width: 1
+            text: Qt.formatDate(clockModel.now, "dddd, d MMMM")
+            color: root.fg2
+            font.family: root.uiFont
+            font.pixelSize: root.px(22)
+        }
 
-            Column {
-                id: cardColumn
-                anchors.centerIn: parent
-                width: parent.width - 64
-                spacing: 14
+        Item { width: 1; height: root.px(10) }
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "󰀄"
-                    color: root.blue
-                    font.family: root.uiFont
-                    font.pixelSize: 42
-                }
+        // Campo de usuario: pill translúcida con borde degradado azul/violeta
+        Item {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: root.px(300)
+            height: root.px(52)
 
-                TextBox {
-                    id: name
-                    width: parent.width
-                    height: 42
-                    text: userModel.lastUser
-                    color: Qt.rgba(1, 1, 1, 0.04)
-                    textColor: root.fg
-                    borderColor: root.comment
-                    focusColor: root.blue
-                    hoverColor: root.purple
-                    radius: 12
-                    font.family: root.uiFont
-                    font.pixelSize: 15
-
-                    KeyNavigation.backtab: loginButton
-                    KeyNavigation.tab: password
-
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            sddm.login(name.text, password.text, sessionIndex)
-                            event.accepted = true
-                        }
-                    }
-                }
-
-                PasswordBox {
-                    id: password
-                    width: parent.width
-                    height: 42
-                    color: Qt.rgba(1, 1, 1, 0.04)
-                    textColor: root.fg
-                    borderColor: root.comment
-                    focusColor: root.purple
-                    hoverColor: root.blue
-                    radius: 12
-                    font.family: root.uiFont
-                    font.pixelSize: 15
-
-                    KeyNavigation.backtab: name
-                    KeyNavigation.tab: sessionCombo
-
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            sddm.login(name.text, password.text, sessionIndex)
-                            event.accepted = true
-                        }
-                    }
-                }
-
-                ComboBox {
-                    id: sessionCombo
-                    width: parent.width
-                    height: 38
-                    model: sessionModel
-                    index: sessionModel.lastIndex
-                    color: Qt.rgba(1, 1, 1, 0.04)
-                    textColor: root.fg2
-                    borderColor: root.comment
-                    focusColor: root.blue
-                    hoverColor: root.purple
-                    menuColor: root.bg1
-                    arrowColor: "transparent"
-                    font.family: root.uiFont
-                    font.pixelSize: 13
-
-                    KeyNavigation.backtab: password
-                    KeyNavigation.tab: loginButton
-
-                    Text {
-                        anchors.right: parent.right
-                        anchors.rightMargin: 14
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "▾"
-                        color: root.fg2
-                        font.pixelSize: 14
-                    }
-                }
-
-                Text {
-                    id: errorMessage
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WordWrap
-                    text: textConstants.prompt
-                    color: root.fg2
-                    font.family: root.uiFont
-                    font.pixelSize: 12
-                }
-
-                Button {
-                    id: loginButton
-                    width: parent.width
-                    height: 42
-                    radius: 12
-                    text: textConstants.login
-                    color: root.blue
-                    activeColor: root.purple
-                    pressedColor: "#5a7bc7"
-                    textColor: root.bg0
-                    font.family: root.uiFont
-                    font.bold: true
-
-                    onClicked: sddm.login(name.text, password.text, sessionIndex)
-
-                    KeyNavigation.backtab: sessionCombo
-                    KeyNavigation.tab: name
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: root.blue }
+                    GradientStop { position: 1.0; color: root.purple }
                 }
             }
+
+            TextBox {
+                id: name
+                anchors.fill: parent
+                anchors.margins: root.px(3)
+                text: userModel.lastUser
+                color: root.fieldFill
+                textColor: root.fg
+                borderColor: "transparent"
+                focusColor: "transparent"
+                hoverColor: "transparent"
+                radius: height / 2
+                font.family: root.uiFont
+                font.pixelSize: root.px(15)
+
+                KeyNavigation.backtab: password
+                KeyNavigation.tab: password
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        sddm.login(name.text, password.text, sessionIndex)
+                        event.accepted = true
+                    }
+                }
+            }
+        }
+
+        // Campo de contraseña: misma pill, con botón de envío circular embebido
+        Item {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: root.px(300)
+            height: root.px(52)
+
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: root.blue }
+                    GradientStop { position: 1.0; color: root.purple }
+                }
+            }
+
+            PasswordBox {
+                id: password
+                anchors.fill: parent
+                anchors.margins: root.px(3)
+                anchors.rightMargin: root.px(46)
+                text: ""
+                color: root.fieldFill
+                textColor: root.fg
+                borderColor: "transparent"
+                focusColor: "transparent"
+                hoverColor: "transparent"
+                radius: height / 2
+                font.family: root.uiFont
+                font.pixelSize: root.px(15)
+
+                KeyNavigation.backtab: name
+                KeyNavigation.tab: sessionCombo
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        sddm.login(name.text, password.text, sessionIndex)
+                        event.accepted = true
+                    }
+                }
+            }
+
+            Rectangle {
+                id: loginButton
+                width: root.px(40)
+                height: root.px(40)
+                radius: width / 2
+                anchors.right: parent.right
+                anchors.rightMargin: root.px(6)
+                anchors.verticalCenter: parent.verticalCenter
+                color: loginMouse.containsMouse ? root.purple : root.blue
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "→"
+                    color: root.bg0
+                    font.family: root.uiFont
+                    font.bold: true
+                    font.pixelSize: root.px(18)
+                }
+
+                MouseArea {
+                    id: loginMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: sddm.login(name.text, password.text, sessionIndex)
+                }
+            }
+        }
+
+        // Selector de sesión: discreto, sin borde ni caja (auxiliar, no está
+        // en hyprlock porque ahí no aplica)
+        ComboBox {
+            id: sessionCombo
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: root.px(180)
+            height: root.px(30)
+            model: sessionModel
+            index: sessionModel.lastIndex
+            color: "transparent"
+            textColor: root.fg2
+            borderColor: "transparent"
+            focusColor: "transparent"
+            hoverColor: "transparent"
+            menuColor: root.bg1
+            arrowColor: "transparent"
+            font.family: root.uiFont
+            font.pixelSize: root.px(12)
+
+            KeyNavigation.backtab: password
+            KeyNavigation.tab: name
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: root.px(8)
+                anchors.verticalCenter: parent.verticalCenter
+                text: "▾"
+                color: root.fg2
+                font.pixelSize: root.px(11)
+            }
+        }
+
+        Text {
+            id: errorMessage
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: root.px(300)
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            text: textConstants.prompt
+            color: root.fg2
+            font.family: root.uiFont
+            font.pixelSize: root.px(12)
         }
     }
 
@@ -262,8 +267,8 @@ Rectangle {
     Row {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 30
-        spacing: 20
+        anchors.bottomMargin: root.px(30)
+        spacing: root.px(20)
 
         Repeater {
             model: [
@@ -273,9 +278,9 @@ Rectangle {
             ]
 
             delegate: Rectangle {
-                width: 54
-                height: 54
-                radius: 16
+                width: root.px(54)
+                height: root.px(54)
+                radius: root.px(16)
                 visible: modelData.visible
                 color: powerMouse.containsMouse ? Qt.rgba(122 / 255, 162 / 255, 247 / 255, 0.25) : root.buttonBg
                 border.color: powerMouse.containsMouse ? root.blue : root.buttonBorder
@@ -289,7 +294,7 @@ Rectangle {
                     text: modelData.glyph
                     color: root.fg
                     font.family: root.uiFont
-                    font.pixelSize: 22
+                    font.pixelSize: root.px(22)
                 }
 
                 MouseArea {

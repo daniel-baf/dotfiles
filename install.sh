@@ -368,7 +368,31 @@ say "==> Habilitando Bluetooth..." "==> Enabling Bluetooth..."
 sudo systemctl enable --now bluetooth.service
 
 # ---------------------------------------------------------------------------
-# 3i. Térmica de la Legion (opcional) -- solo si el equipo es la Legion Pro 5
+# 3i. Tailscale (VPN mesh) -- el paquete de los repos oficiales trae el daemon
+#     tailscaled, que tiene que estar habilitado antes de poder hacer login.
+#     El "tailscale up" es interactivo (abre el navegador para autenticar la
+#     máquina contra tu tailnet) así que se pregunta, como con gh.
+# ---------------------------------------------------------------------------
+say "==> Instalando Tailscale..." "==> Installing Tailscale..."
+sudo pacman -S --needed --noconfirm tailscale
+sudo systemctl enable --now tailscaled.service
+
+if tailscale status >/dev/null 2>&1; then
+    say "==> Tailscale ya está conectado ($(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//'))." \
+        "==> Tailscale is already connected ($(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//'))."
+else
+    echo ""
+    if ask_yn "¿Conectar esta máquina a tu tailnet con 'tailscale up' ahora? [s/N]: " \
+              "Connect this machine to your tailnet with 'tailscale up' now? [y/N]: "; then
+        sudo tailscale up
+    else
+        say "==> Saltado. Corré 'sudo tailscale up' cuando quieras." \
+            "==> Skipped. Run 'sudo tailscale up' whenever you want."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 3j. Térmica de la Legion (opcional) -- solo si el equipo es la Legion Pro 5
 #     16ARX8 (detectado por DMI). Instala TLP, el driver de fans
 #     LenovoLegionLinux (DKMS por AUR), la curva de ventiladores custom con
 #     su servicio de persistencia, y el APST del NVMe en el cmdline de
@@ -481,6 +505,20 @@ if ! npm list -g @mermaid-js/mermaid-cli >/dev/null 2>&1; then
 fi
 say "==> PlantUML necesita Java + el paquete 'plantuml' -- instalalo si lo usás: sudo pacman -S jre-openjdk plantuml" \
     "==> PlantUML needs Java + the 'plantuml' package -- install it if you use it: sudo pacman -S jre-openjdk plantuml"
+
+# ---------------------------------------------------------------------------
+# 6c. pnpm (mismo criterio que Node: global vía nvm/npm en $HOME, sin sudo)
+# ---------------------------------------------------------------------------
+if ! command -v pnpm >/dev/null 2>&1; then
+    say "==> Instalando pnpm..." "==> Installing pnpm..."
+    ensure_nvm_node
+    if ! npm install -g pnpm; then
+        say "==> No se pudo instalar pnpm. Instalalo a mano: npm install -g pnpm" \
+            "==> Could not install pnpm. Install it manually: npm install -g pnpm"
+    fi
+else
+    say "==> pnpm ya está instalado ($(pnpm --version))." "==> pnpm is already installed ($(pnpm --version))."
+fi
 
 # ---------------------------------------------------------------------------
 # 7. Identidad de git + SSH (opcional -- si decís que no, no se toca nada)
@@ -673,6 +711,21 @@ if ! have_pkg spotify-launcher; then
     install_aur spotify-launcher
     say "    (Primera vez: corré 'spotify-launcher' para que baje el cliente oficial.)" \
         "    (First run: run 'spotify-launcher' so it downloads the official client.)"
+fi
+
+say "-- Video --" "-- Video --"
+# VLC se pregunta (no todos lo quieren) pero el plugin de ffmpeg no es
+# opcional si VLC está: desde que Arch partió el paquete en vlc + plugins,
+# un VLC pelado no trae los decoders de ffmpeg y la mayoría de los videos
+# abren sin imagen ("No suitable decoder module").
+if have_pkg vlc; then
+    say "==> vlc ya está instalado." "==> vlc is already installed."
+    install_pacman vlc-plugin-ffmpeg
+elif ask_yn "¿Instalar VLC? [s/N]: " "Install VLC? [y/N]: "; then
+    install_pacman vlc
+    install_pacman vlc-plugin-ffmpeg
+else
+    say "==> Saltado: VLC no instalado." "==> Skipped: VLC not installed."
 fi
 
 say "-- Gaming --" "-- Gaming --"
