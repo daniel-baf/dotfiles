@@ -184,8 +184,8 @@ say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages
 #   ~/.cache/elephant/clipboard.gob, NO en cliphist -- ese paquete no hace
 #   falta, quedó descartado tras confirmar que elephant no lo usa).
 sudo pacman -S --needed --noconfirm \
-    stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd less \
-    bash-completion fzf btop trash-cli wl-clipboard \
+    stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd ttf-firacode-nerd less \
+    bash-completion fzf btop trash-cli wl-clipboard direnv \
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk polkit-kde-agent \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
     pipewire pipewire-pulse wireplumber brightnessctl playerctl \
@@ -702,6 +702,20 @@ EOF
                     "==> Everything you clone inside $alt_dir/ will automatically use the '$alt_ext' account (key + email)."
             fi
             ALT_DIR="$alt_dir"
+
+            # gh CLI no sabe de carpetas (solo tiene una cuenta activa
+            # global), así que se usa direnv: el .envrc de esa carpeta fija
+            # GH_TOKEN con el token de la cuenta alternativa, que gh prioriza
+            # sobre la cuenta activa. No se guarda ningún token en el archivo,
+            # solo se le pide a gh al entrar a la carpeta.
+            read -rp "$(ask "Usuario de GitHub de '$alt_ext' para gh CLI (Enter = saltar): " \
+                            "GitHub username of '$alt_ext' for gh CLI (Enter = skip): ")" alt_gh_user
+            if [ -n "$alt_gh_user" ]; then
+                echo "export GH_TOKEN=\$(gh auth token --user $alt_gh_user)" > "$alt_dir/.envrc"
+                direnv allow "$alt_dir" 2>/dev/null || true
+                say "==> gh CLI usará '$alt_gh_user' dentro de $alt_dir/ (hacé 'gh auth login' con esa cuenta y 'gh auth switch' a la personal si falta)." \
+                    "==> gh CLI will use '$alt_gh_user' inside $alt_dir/ (run 'gh auth login' for that account and 'gh auth switch' to your personal one if needed)."
+            fi
         fi
     fi
 else
