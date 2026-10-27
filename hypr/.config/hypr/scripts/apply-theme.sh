@@ -16,7 +16,7 @@
 # escribe cada vez, así queda sincronizada con el toggle del rice.
 set -e
 
-scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
+scheme=$(timeout 3 gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
 if [ "$scheme" = "prefer-light" ]; then
     mode="light"
     prefer_dark=0
@@ -58,13 +58,16 @@ done
 #    ahí ("keyword can't work with non-legacy parsers. Use eval."), así que
 #    se reaplica el mismo hl.config({...}) que arma hyprland.lua vía
 #    "hyprctl eval".
-hyprctl eval "hl.config({ general = { col = { active_border = { colors = {\"$border_active_1\", \"$border_active_2\"}, angle = 45 }, inactive_border = \"$border_inactive\" } }, decoration = { shadow = { color = $shadow_color } } })" >/dev/null 2>&1 || true
+timeout 3 hyprctl eval "hl.config({ general = { col = { active_border = { colors = {\"$border_active_1\", \"$border_active_2\"}, angle = 45 }, inactive_border = \"$border_inactive\" } }, decoration = { shadow = { color = $shadow_color } } })" >/dev/null 2>&1 || true
 
 # 5. Reload de cada app
-swaync-client --reload-css >/dev/null 2>&1 || true
+# "timeout": sin sesión gráfica (p.ej. install.sh corrido desde una TTY, sin
+# swaync ni D-Bus de sesión) swaync-client espera para siempre al daemon y
+# cuelga el instalador -- así se corta a los 3 s y sigue.
+timeout 3 swaync-client --reload-css >/dev/null 2>&1 || true
 (pkill waybar || true; sleep 0.2; setsid waybar >/dev/null 2>&1 &) &
 disown
 (pkill -f 'walker --gapplication-service' || true; sleep 0.2; setsid walker --gapplication-service >/dev/null 2>&1 &) &
 disown
 
-notify-send "Tema" "Modo: $mode" 2>/dev/null || true
+timeout 3 notify-send "Tema" "Modo: $mode" 2>/dev/null || true
