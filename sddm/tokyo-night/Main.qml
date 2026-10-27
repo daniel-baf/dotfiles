@@ -30,7 +30,7 @@ Rectangle {
     property color fg: "#c0caf5"
     property color fg2: "#a9b1d6"
     property color comment: "#545c7e"
-    property string uiFont: "CaskaydiaCove Nerd Font"
+    property string uiFont: "FiraCode Nerd Font"
 
     // Escala responsive: el tema fue diseñado sobre 2560x1440 (2K). SDDM
     // redimensiona este Rectangle a la resolución real de cada pantalla, pero

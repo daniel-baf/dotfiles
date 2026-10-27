@@ -184,7 +184,7 @@ say "==> Instalando paquetes de los repos oficiales..." "==> Installing packages
 #   ~/.cache/elephant/clipboard.gob, NO en cliphist -- ese paquete no hace
 #   falta, quedó descartado tras confirmar que elephant no lo usa).
 sudo pacman -S --needed --noconfirm \
-    stow nautilus ranger hyprpaper hyprshot swaync ttf-cascadia-code-nerd ttf-firacode-nerd less \
+    stow nautilus ranger hyprpaper hyprshot swaync ttf-firacode-nerd less \
     bash-completion fzf btop trash-cli wl-clipboard direnv \
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk polkit-kde-agent \
     hyprland hyprlock hypridle waybar kitty github-cli postgresql jq make \
