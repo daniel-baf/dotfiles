@@ -62,6 +62,34 @@ ask_yn() {
     [[ "$ans" =~ ^[sSyY] ]]
 }
 
+# pacman y paru comparten la base de datos local -> sirve para ambos.
+have_pkg() {
+    pacman -Q "$1" >/dev/null 2>&1
+}
+
+# install_pacman <pkg> / install_aur <pkg> -- nunca abortan el script.
+install_pacman() {
+    if have_pkg "$1"; then
+        say "==> $1 ya está instalado." "==> $1 is already installed."
+        return 0
+    fi
+    if ! sudo pacman -S --needed --noconfirm "$1"; then
+        say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: sudo pacman -S $1" \
+            "==> Could not install '$1'. Install it manually whenever you want: sudo pacman -S $1"
+    fi
+}
+
+install_aur() {
+    if have_pkg "$1"; then
+        say "==> $1 ya está instalado." "==> $1 is already installed."
+        return 0
+    fi
+    if ! paru -S --needed --noconfirm "$1"; then
+        say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: paru -S $1" \
+            "==> Could not install '$1'. Install it manually whenever you want: paru -S $1"
+    fi
+}
+
 ensure_nvm_node() {
     # Instala Node vía nvm (dentro de $HOME, sin sudo) la primera vez que se
     # necesita, y lo deja disponible para el resto de esta corrida del
@@ -368,26 +396,37 @@ say "==> Habilitando Bluetooth..." "==> Enabling Bluetooth..."
 sudo systemctl enable --now bluetooth.service
 
 # ---------------------------------------------------------------------------
-# 3i. Tailscale (VPN mesh) -- el paquete de los repos oficiales trae el daemon
-#     tailscaled, que tiene que estar habilitado antes de poder hacer login.
-#     El "tailscale up" es interactivo (abre el navegador para autenticar la
-#     máquina contra tu tailnet) así que se pregunta, como con gh.
+# 3i. Tailscale (VPN mesh) -- se pregunta si se instala (igual que VLC: no
+#     todas las máquinas van a una tailnet). El paquete de los repos oficiales
+#     trae el daemon tailscaled, que tiene que estar habilitado antes de poder
+#     hacer login. El "tailscale up" es interactivo (abre el navegador para
+#     autenticar la máquina contra tu tailnet) así que se pregunta, como con gh.
 # ---------------------------------------------------------------------------
-say "==> Instalando Tailscale..." "==> Installing Tailscale..."
-sudo pacman -S --needed --noconfirm tailscale
-sudo systemctl enable --now tailscaled.service
-
-if tailscale status >/dev/null 2>&1; then
-    say "==> Tailscale ya está conectado ($(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//'))." \
-        "==> Tailscale is already connected ($(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//'))."
+echo ""
+if have_pkg tailscale; then
+    say "==> tailscale ya está instalado." "==> tailscale is already installed."
+elif ask_yn "¿Instalar Tailscale (VPN mesh)? [s/N]: " "Install Tailscale (mesh VPN)? [y/N]: "; then
+    install_pacman tailscale
 else
-    echo ""
-    if ask_yn "¿Conectar esta máquina a tu tailnet con 'tailscale up' ahora? [s/N]: " \
-              "Connect this machine to your tailnet with 'tailscale up' now? [y/N]: "; then
-        sudo tailscale up
+    say "==> Saltado: Tailscale no instalado. Instalalo cuando quieras: sudo pacman -S tailscale" \
+        "==> Skipped: Tailscale not installed. Install it whenever you want: sudo pacman -S tailscale"
+fi
+
+if have_pkg tailscale; then
+    sudo systemctl enable --now tailscaled.service
+
+    if tailscale status >/dev/null 2>&1; then
+        say "==> Tailscale ya está conectado ($(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//'))." \
+            "==> Tailscale is already connected ($(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//'))."
     else
-        say "==> Saltado. Corré 'sudo tailscale up' cuando quieras." \
-            "==> Skipped. Run 'sudo tailscale up' whenever you want."
+        echo ""
+        if ask_yn "¿Conectar esta máquina a tu tailnet con 'tailscale up' ahora? [s/N]: " \
+                  "Connect this machine to your tailnet with 'tailscale up' now? [y/N]: "; then
+            sudo tailscale up
+        else
+            say "==> Saltado. Corré 'sudo tailscale up' cuando quieras." \
+                "==> Skipped. Run 'sudo tailscale up' whenever you want."
+        fi
     fi
 fi
 
@@ -678,34 +717,6 @@ fi
 say "==> Apps opcionales (se instalan las que falten)..." \
     "==> Optional apps (missing ones get installed)..."
 
-# pacman y paru comparten la base de datos local -> sirve para ambos.
-have_pkg() {
-    pacman -Q "$1" >/dev/null 2>&1
-}
-
-# install_pacman <pkg> / install_aur <pkg> -- nunca abortan el script.
-install_pacman() {
-    if have_pkg "$1"; then
-        say "==> $1 ya está instalado." "==> $1 is already installed."
-        return 0
-    fi
-    if ! sudo pacman -S --needed --noconfirm "$1"; then
-        say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: sudo pacman -S $1" \
-            "==> Could not install '$1'. Install it manually whenever you want: sudo pacman -S $1"
-    fi
-}
-
-install_aur() {
-    if have_pkg "$1"; then
-        say "==> $1 ya está instalado." "==> $1 is already installed."
-        return 0
-    fi
-    if ! paru -S --needed --noconfirm "$1"; then
-        say "==> No se pudo instalar '$1'. Instalalo a mano cuando quieras: paru -S $1" \
-            "==> Could not install '$1'. Install it manually whenever you want: paru -S $1"
-    fi
-}
-
 say "-- Grabación/streaming --" "-- Recording/streaming --"
 install_pacman obs-studio
 
@@ -821,6 +832,24 @@ if ! command -v agy >/dev/null 2>&1; then
     fi
 else
     say "==> La CLI de Antigravity (agy) ya está instalada." "==> The Antigravity CLI (agy) is already installed."
+fi
+# Kimi Code (Moonshot AI) -- opcional. Instalador oficial: baja el binario,
+# verifica el checksum y lo deja en ~/.kimi-code/bin (no necesita Node). El
+# PATH ya lo pone bash/.bashrc con $HOME, así que sirve con cualquier usuario;
+# el login (/login dentro de kimi) es interactivo y se hace a mano.
+if command -v kimi >/dev/null 2>&1 || [ -x "$HOME/.kimi-code/bin/kimi" ]; then
+    say "==> Kimi Code ya está instalado." "==> Kimi Code is already installed."
+elif ask_yn "¿Instalar Kimi Code (CLI de Moonshot AI)? [s/N]: " "Install Kimi Code (Moonshot AI CLI)? [y/N]: "; then
+    if curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash; then
+        say "==> Kimi Code instalado. Abrí una terminal nueva y corré 'kimi', luego /login." \
+            "==> Kimi Code installed. Open a new terminal and run 'kimi', then /login."
+    else
+        say "==> No se pudo instalar Kimi Code. Instalalo a mano: curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash" \
+            "==> Could not install Kimi Code. Install it manually: curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash"
+    fi
+else
+    say "==> Saltado. Instalalo cuando quieras: curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash" \
+        "==> Skipped. Install it whenever you want: curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash"
 fi
 
 say "-- Infraestructura / IaC --" "-- Infrastructure / IaC --"
