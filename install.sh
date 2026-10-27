@@ -429,9 +429,13 @@ fi
 # ---------------------------------------------------------------------------
 mkdir -p "$HOME/Pictures/wallpapers" "$HOME/Pictures/Screenshots"
 if [ ! -e "$HOME/Pictures/wallpapers/wallpaper.jpg" ] && [ ! -e "$HOME/Pictures/wallpapers/wallpaper.png" ]; then
-    say "==> No hay wallpaper todavía en ~/Pictures/wallpapers/." "==> There's no wallpaper yet in ~/Pictures/wallpapers/."
-    say "    Copia ahí tu imagen como 'wallpaper.jpg' (o cambia la ruta en hyprpaper.conf)." \
-        "    Copy your image there as 'wallpaper.jpg' (or change the path in hyprpaper.conf)."
+    # Wallpaper por defecto del repo (wallpapers/wallpaper.jpg). Solo se copia
+    # si no hay uno ya, así nunca pisa el que hayas puesto vos.
+    say "==> No hay wallpaper todavía: copiando el wallpaper por defecto del repo a ~/Pictures/wallpapers/." \
+        "==> No wallpaper yet: copying the repo's default wallpaper to ~/Pictures/wallpapers/."
+    cp "$DOTFILES_DIR/wallpapers/wallpaper.jpg" "$HOME/Pictures/wallpapers/wallpaper.jpg"
+    say "    Para usar otro, reemplazá ~/Pictures/wallpapers/wallpaper.jpg." \
+        "    To use a different one, replace ~/Pictures/wallpapers/wallpaper.jpg."
 fi
 
 # ---------------------------------------------------------------------------
