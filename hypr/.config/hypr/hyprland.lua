@@ -126,7 +126,17 @@ hl.on("hyprland.start", function()
     -- para que no persista de una sesión a otra hay que borrar ESE archivo
     -- (con el servicio parado, para no pisarlo mientras escribe) antes de
     -- levantarlo de nuevo.
-    hl.exec_cmd("systemctl --user daemon-reload; systemctl --user stop elephant.service; rm -f ~/.cache/elephant/clipboard.gob; systemctl --user start elephant.service")
+    --
+    -- Antes de levantarlo se exportan las variables de hl.env al entorno de
+    -- systemd --user / D-Bus: elephant hereda ESE entorno (no el de Hyprland)
+    -- y se lo pasa a todo lo que se abre desde Walker. Hyprland solo exporta
+    -- WAYLAND_DISPLAY/XDG_CURRENT_DESKTOP/etc. por su cuenta; sin
+    -- XDG_SESSION_TYPE=wayland, Chrome y Firefox (libwebrtc) no usan el
+    -- portal/PipeWire para compartir pantalla y caen a captura X11 por
+    -- XWayland -> en Meet se comparte una pantalla negra. Lo mismo con
+    -- ELECTRON_OZONE_PLATFORM_HINT (Electron por XWayland, borroso) y las
+    -- variables de NVIDIA/cursor.
+    hl.exec_cmd("dbus-update-activation-environment --systemd XDG_SESSION_TYPE LIBVA_DRIVER_NAME GBM_BACKEND __GLX_VENDOR_LIBRARY_NAME WLR_NO_HARDWARE_CURSORS NVD_BACKEND XCURSOR_THEME XCURSOR_SIZE HYPRCURSOR_THEME HYPRCURSOR_SIZE QT_QPA_PLATFORMTHEME ELECTRON_OZONE_PLATFORM_HINT; systemctl --user daemon-reload; systemctl --user stop elephant.service; rm -f ~/.cache/elephant/clipboard.gob; systemctl --user start elephant.service")
 end)
 hl.on("hyprland.start", function()
     -- servicio de walker: precarga la ventana para que SUPER+R la muestre al instante
