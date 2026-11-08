@@ -160,6 +160,18 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("pkill -f polkit-kde-authentication-agent-1; /usr/lib/polkit-kde-authentication-agent-1")
 end)
 hl.on("hyprland.start", function()
+    -- Curva de ventiladores de la GPU NVIDIA (nvidia/install-nvidia-fan.sh,
+    -- docs/nvidia/fan-curve.md). Escribir GPUFanControlState necesita root:
+    -- la regla NOPASSWD vive en /etc/sudoers.d/nvidia-fan-curve y solo
+    -- habilita ese script, no sudo arbitrario. -n = nunca preguntar (en un
+    -- login no hay terminal): si la regla no existe, no hace nada.
+    -- En laptops el script sale solo porque el fan lo maneja el EC.
+    hl.exec_cmd([[
+        pkill -f '[n]vidia-fan-curve.sh'
+        [ -x /usr/local/sbin/nvidia-fan-curve.sh ] && sudo -n /usr/local/sbin/nvidia-fan-curve.sh >/dev/null 2>&1 &
+    ]])
+end)
+hl.on("hyprland.start", function()
     -- Bordes/sombra oscuros o claros según gsettings color-scheme: no
     -- persisten solos entre sesiones (se aplican con hyprctl keyword, no
     -- viven en este archivo), así que hay que reaplicarlos al arrancar.
