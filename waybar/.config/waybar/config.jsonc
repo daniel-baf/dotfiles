@@ -21,6 +21,7 @@
         "custom/numlock",
         "pulseaudio",
         "battery",
+        "custom/idle",
         "custom/notifications",
         "custom/theme-toggle",
         "tray"
@@ -117,6 +118,18 @@
         },
         "on-click": "swaync-client -t -sw",
         "escape": true
+    },
+
+    // Bloqueo automático: click activa/desactiva, click derecho elige minutos.
+    // El script manda RTMIN+9 a waybar al cambiar ("signal") para refrescar al instante.
+    "custom/idle": {
+        "exec": "~/.config/hypr/scripts/idle-lock.sh status",
+        "return-type": "json",
+        "interval": 30,
+        "signal": 9,
+        "on-click": "~/.config/hypr/scripts/idle-lock.sh toggle",
+        "on-click-right": "~/.config/hypr/scripts/idle-lock.sh menu",
+        "tooltip": true
     },
 
     "custom/theme-toggle": {

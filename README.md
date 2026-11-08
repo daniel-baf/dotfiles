@@ -8,7 +8,7 @@ Config de Hyprland (Legion Pro 7, solo NVIDIA) gestionada con [GNU Stow](https:/
 |-----------|-------------------------------------------------|
 | `git`     | `~/.gitconfig` (sin datos personales, ver abajo) |
 | `kitty`   | Terminal, tema Tokyo Night                       |
-| `hypr`    | `hyprland.lua`, `hyprlock`, `hypridle`, `hyprpaper` |
+| `hypr`    | `hyprland.lua`, `hyprlock`, `hypridle` (generado por `scripts/idle-lock.sh`), `hyprpaper` |
 | `waybar`  | Barra superior (incluye el botón de tema oscuro/claro) |
 | `theme`   | Paleta compartida oscura/clara (Tokyo Night / Tokyo Night Day) que importan waybar, swaync, wlogout y walker |
 | `walker`  | Launcher (`SUPER + R`)                           |
