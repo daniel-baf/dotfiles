@@ -455,6 +455,27 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 3k. Curva de ventiladores NVIDIA (opcional) -- GPUFanControlState es una
+#     escritura privilegiada de NV-CONTROL: como usuario normal nvidia-settings
+#     solo puede leerla. El instalador copia el script a /usr/local/sbin y crea
+#     una regla de sudoers NOPASSWD solo para ese script; Hyprland lo arranca
+#     en cada login (ver hyprland.lua). En laptops el script se auto-omite
+#     porque el fan del dGPU lo maneja el EC. Detalles: docs/nvidia/fan-curve.md.
+# ---------------------------------------------------------------------------
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L 2>/dev/null | grep -q '^GPU'; then
+    if ask_yn "¿Configurar la curva de ventiladores de la GPU NVIDIA (nvidia-settings + sudoers + autostart)? [s/N]: " \
+              "Configure the NVIDIA GPU fan curve (nvidia-settings + sudoers + autostart)? [y/N]: "; then
+        bash "$DOTFILES_DIR/nvidia/install-nvidia-fan.sh"
+    else
+        say "==> Saltado. Podés correrlo cuando quieras: nvidia/install-nvidia-fan.sh" \
+            "==> Skipped. You can run it whenever you want: nvidia/install-nvidia-fan.sh"
+    fi
+else
+    say "==> No detecté GPU NVIDIA con driver propietario: se omite la curva de fans." \
+        "==> No NVIDIA GPU with the proprietary driver found: skipping the fan curve."
+fi
+
+# ---------------------------------------------------------------------------
 # 4. Tema oscuro por defecto + cursor (sin temas de terceros)
 # ---------------------------------------------------------------------------
 if command -v gsettings >/dev/null 2>&1; then
