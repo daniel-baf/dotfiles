@@ -209,12 +209,17 @@ paru -S --needed --noconfirm walker wlogout nwg-displays pwvucontrol \
     elephant-bluetooth-bin
 
 # ---------------------------------------------------------------------------
-# 3a. NetworkManager (obligatorio: sin esto no hay forma de conectarse a
-#     redes WiFi nuevas desde la UI)
+# 3a. NetworkManager y sincronización horaria
+#     NetworkManager: sin esto no hay forma de conectarse a redes WiFi nuevas
+#     desde la UI.
 # ---------------------------------------------------------------------------
 say "==> Habilitando NetworkManager (para conectarte a redes WiFi nuevas)..." \
     "==> Enabling NetworkManager (needed to connect to new WiFi networks)..."
 sudo systemctl enable --now NetworkManager.service
+
+say "==> Habilitando sincronización automática de hora (NTP)..." \
+    "==> Enabling automatic time synchronization (NTP)..."
+sudo timedatectl set-ntp true
 
 # ---------------------------------------------------------------------------
 # 3b. Docker
